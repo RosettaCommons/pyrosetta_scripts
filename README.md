@@ -2,6 +2,8 @@
 #Authors: All members of the RosettaCommons  
 #Date: 28/Apr/2017    
 #Description: Transient repository for python scripts that use pyrosetta  
+
+***DO NOT FORK THIS REPOSITORY***
   
 This is an early experiment, everything has to be figured out yet.  
   
