@@ -1,0 +1,18 @@
+# ignore everything except python scripts
+
+
+# Ignore everything
+*
+
+# But not the .gitignore file and the Readme.md
+!.gitignore
+!*.md
+
+# And not python scripts
+!*.py
+
+# if they are in subdirectories
+!*/
+!*/*.py
+!*/*/
+!*/*/*.py
