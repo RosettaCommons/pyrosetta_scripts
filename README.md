@@ -24,21 +24,6 @@ Tree-structure:
  │   ├── motifGrafting  
  │   ├── peptideDesign  
  │   │   └── dbaker  
- │   │       ├── #make_peptides.py#  
- │   │       ├── hash_subclass.py  
- │   │       ├── hash_subclass.pyc  
- │   │       ├── make_peptides.py  
- │   │       ├── make_peptides.py~  
- │   │       ├── make_peptides_vary_repeat_length.py  
- │   │       ├── make_peptides_vary_repeat_length.py~  
- │   │       ├── pdb_utils_noclass.py  
- │   │       ├── pdb_utils_noclass.pyc  
- │   │       ├── repeat+xtl.list  
- │   │       ├── repeat_protein.list  
- │   │       ├── repeat_protein_xtls.list  
- │   │       ├── repeat_utils.py  
- │   │       ├── repeat_utils.pyc  
- │   │       └── repeat_utils.py~  
  │   ├── proteinIdealization  
  │   └── toolbox  
  ├── tests  
