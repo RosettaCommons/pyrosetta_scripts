@@ -1,0 +1,17 @@
+.metadata
+.svn
+*.cproject
+*.project
+*.autotools
+*.pydevproject
+.DS_Store
+*.pyc
+*.o
+*.so
+*.dylib
+*.os
+._*
+*~
+*.swp
+\#*\#
+.\#*
