@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/sheffler/venv/david/bin/python
 from sys import argv
 from pyrosetta import *
 from pdb_utils_noclass import *
