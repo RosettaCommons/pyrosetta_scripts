@@ -79,7 +79,6 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
   rosetta.core.pose.make_pose_from_sequence(p, seq,"fa_standard")
   torsions=[]
   helical_params=[]
-  phi_psiL=[]
   for i in range(Nsamples):
     torsions=[]  
     for j in range(repeat_L):
@@ -98,7 +97,6 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
     for torsion in torsions:
         tor_list.append(torsion[0])
         tor_list.append(torsion[1])
-    phi_psiL.append(tor_list)
     
     if dump_pdb:    p.dump_pdb('test_%s.pdb'%i)
 
@@ -109,8 +107,7 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
     p=center_on_z_axis(res1,res2,p)
     pdbs[i]=p.clone()
     if dump_pdb:   p.dump_pdb('test_%s_tf.pdb'%i)
-    
-    yield phi_psiL, p.clone(), (trans,radius,ang)
+    yield tor_list, p.clone(), (trans,radius,ang)
   # return torsions, pdbs, helical_params
 
 def dock_peptide(p,nbins): 
@@ -177,10 +174,14 @@ for DHR in matches.keys():
         pept_params=matches[DHR][i][1]
         torsions=matches[DHR][i][2]
         arc_length=sqrt( pept_params[0]**2 + (pept_params[1] * sin(pept_params[2] )**2  ) )
-        print('%s %.2f %.2f %.2f  %.2f'%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
-        base=DHR.index('.')
+        print('%s %.2f %.2f %.2f  %.2f '%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
+        print(torsions)
+        if '.' in DHR:
+            base=DHR.index('.')
+        else:
+            base=DHR
 
-        if (args.skip_docking): continue
+        if (args.skip_dock): continue
         dock_gen=dock_peptide(p,nbins)
         print 'evaluate number of contacts and clashes for each dock of peptide'
         good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,20)  #need to fix now that have generator
