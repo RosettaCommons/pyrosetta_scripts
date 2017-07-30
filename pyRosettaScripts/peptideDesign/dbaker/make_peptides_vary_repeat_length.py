@@ -14,26 +14,64 @@ from rif.geom import Ray
 from rosetta.numeric import xyzVector_double_t as V3
 from rosetta.numeric import xyzMatrix_double_t as M3
 from hash_subclass import *
+import argparse
 
-def choose_torsions(frange,aa_type):
+def get_argparse():
+    parser = argparse.ArgumentParser(description='Dock de novo generated peptide backbones against repeat proteins')
+    parser.add_argument('input_file',
+                   help='list of repeat proteins')
+    parser.add_argument('--dock_res', type=int, dest='nbins',
+                   default=6,
+                   help='peptide-repeat protein docking resolution (higher number is higher res and slower)')
+    parser.add_argument('--npeptides', type=int, dest='npept',
+                   default=200,
+                   help='number of peptides to generate')
+    parser.add_argument('--phi_range', type=float, dest='phi_range', nargs=2,
+                   default=[-180.,180.],
+                   help='lower and upper limits of peptide phi distribution')
+    parser.add_argument('--psi_range', type=float, dest='phi_range', nargs=2,
+                   default=[-180.,189.],
+                   help='lower and upper limits of peptide psi distribution')
+    parser.add_argument('--Nrepeats', type=int, dest='Nrepeat', 
+                   default=6,
+                   help='number of repeat units in peptide')
+    parser.add_argument('--repeat_length', type=int, dest='repeat_length', 
+                   default=2,
+                   help='length of repeat unit')
+    parser.add_argument('--skip_docking',type=bool, dest='skip_dock',
+                   default='0',                    
+                   help='skip docking step')
+    parser.add_argument('--use_hash', type=bool, dest='use_hash',
+                   default='1',
+                   help='use bidentate hbond hash (or other geometric property) to filter docks ')
+    parser.add_argument('--hash_file_name', dest='hash_file', 
+                   default='bb_asn_dict_combo_1.0_rot0',
+                   help='name of hash file (required if --use_hash is specified if different from default) ')
+    parser.add_argument('--repeat_match_trans', type= float, dest='trans_threshold', 
+                   default='1.5',
+                   help='maximum difference in helical translation per repeat (Angstroms) between peptide and repeat protein')
+    parser.add_argument('--repeat_match_rot', type=float, dest='rot_threshold', 
+                   default='0.2',
+                   help='maximum difference in helical rotation per repeat (radians) between peptide and repeat protein')
+ 
+def choose_torsions(phi_range,psi_range,aa_type):
     MAX_TRIES=20
     ntries=0
     found=0
     for i in range(MAX_TRIES):
       ntries=ntries+1
-      phi =-75. + ran_range(frange)
-      psi =145. +  ran_range(frange)
-      if eval_rama(aa_type,phi,psi) < 1.5:
+      phi = random.uniform(phi_range[0],phi_range[1])
+      psi = random.uniform(psi_range[0],psi_range[1])
+      if eval_rama(aa_type,phi,psi) < 1.0:
         found=1
         break
 
     if found==0: print 'no torsions found'
     return phi,psi  # if not found, then return last phi psi pair sampled
 
-def generate_peptides(repeat_L,Nsamples,frange,dump_pdb):
+def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
   p=Pose()
   pdbs={}
-  N_repeats=14%repeat_length
   length=N_repeats*repeat_L
   seq=""
   for i in range(length):seq=seq+"A"
@@ -44,9 +82,9 @@ def generate_peptides(repeat_L,Nsamples,frange,dump_pdb):
   psiL=[]
   for i in range(Nsamples):
     for j in range(repeat_L):
-        phi,psi=  choose_torsions(frange,'THR')
-        phiL.append(phi)
-        phiL.append(psi)
+        phi,psi=  choose_torsions(phi_range,psi_range,'THR')
+        phi_psiL.append(phi)
+        phi_psiL.append(psi)
         
         torsions.append( (phi,psi) )
     
@@ -66,7 +104,7 @@ def generate_peptides(repeat_L,Nsamples,frange,dump_pdb):
     p=center_on_z_axis(res1,res2,p)
     pdbs[i]=p.clone()
     if dump_pdb:   p.dump_pdb('test_%s_tf.pdb'%i)
-    yield [phi1,psi1,phi2,psi2], p.clone(), (trans,radius,ang)
+    yield phi_psiL, p.clone(), (trans,radius,ang)
   # return torsions, pdbs, helical_params
 
 def dock_peptide(p,nbins): 
@@ -83,9 +121,9 @@ def dock_peptide(p,nbins):
 #          c.dump_pdb('%s_%s_combo_%s_%s_tf.pdb'%(DHR[0:base],p_index,angle,dist))
           yield(c, deg,dist)
   
-def compare_params(pept_gen, DHR,names):
-    trans_threshold=2.0  # difference in translation/repeat (Angstroms)
-    rot_threshold=0.6  # difference in rotation/repeat (radians)
+def compare_params(pept_gen, DHR,names, trans_threshold, rot_threshold):
+#    trans_threshold=2.0  # difference in translation/repeat (Angstroms)
+#    rot_threshold=0.6  # difference in rotation/repeat (radians)
     matches={}
     Nmatch=0
     for d in names:
@@ -94,7 +132,7 @@ def compare_params(pept_gen, DHR,names):
     for torsions, pdb, p in pept_gen:
         for i in range(len(DHR)):
             d=DHR[i]
-            for n in range(1,3): # check for 1 or 2 peptide repeats equivalent to 1 repeat protein repeat
+            for n in range(1,4): # check for 1 - 2 peptide repeats equivalent to 1 repeat protein repeat
              if ( abs(d[0] -n*p[0]) < trans_threshold and abs(d[2]-n*p[2]) < rot_threshold) :
                 #print('match  %s %s'%(names[i],j))
                 matches[names[i]].append( (pdb.clone(),p,torsions) )
@@ -102,23 +140,26 @@ def compare_params(pept_gen, DHR,names):
     return Nmatch,matches
 
 ############################################################
+get_argparse()
+args=parser.parse_args()
 init_pyrosetta()
-input_file=argv[1] # list of repeat proteins
-nbins=int(argv[2]) # resolution of docking grid sampling
-npept=int(argv[3])
+#input_file=argv[1] # list of repeat proteins
+##nbins=int(argv[2]) # resolution of docking grid sampling
+#npept=int(argv[3])
 #Nstruct, angle variance, output_pdb
+
 # use generator to avoid memory cost of storing all structures
 print 'set up  peptide backbone generator '
-pept_gen = generate_peptides(3,npept,20.,0)  #repeat_length, Nstruct, angle variance, output_pdb
+pept_gen = generate_peptides(args.repeat_length,args.Nrepeats,args.npept,args.phi,args.psi,0)  #repeat_length, Nstruct, angle variance, output_pdb
 
 print 'get repeat protein params '
-DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(input_file)
+DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file)
 
 print 'generate peptides and compare helical params to those of repeat proteins'
-Nmatch, matches=compare_params(pept_gen,DHR_params,names)
+Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.repeat_threshold)
 print('Number of matches: %s '%Nmatch)
 
-hash_nc=use_hash_rot(1.0,3.0,"bb_asn_dict_combo_1.0_rot0")
+if args.use_hash: hash_nc=use_hash_rot(1.0,3.0,args.hash_file)
 for DHR in matches.keys():
     print DHR_arcs[DHR],len(matches[DHR])
     q=rep_structs[DHR]
@@ -132,19 +173,22 @@ for DHR in matches.keys():
         print('%s %.2f %.2f %.2f  %.2f'%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
         base=DHR.index('.')
 
-        continue
+        if (args.skip_docking): continue
         dock_gen=dock_peptide(p,nbins)
         print 'evaluate number of contacts and clashes for each dock of peptide'
         good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,20)  #need to fix now that have generator
 
-# now screen matches to count number of asn-bb hbonds
+
     
         print 'contacts: ', ntries, len(good_matches),contact_hist
         for match in good_matches:
          pdb=match[0].clone()
-         n_sc_bb=hash_nc.count_asn_bb(pdb,q)
-         print('number asn-bb hbonds %s'%n_sc_bb)
-         if n_sc_bb > 0:
+         n_sc_bb=0
+         if args.use_hash:
+#  screen matches to count number of asn-bb hbonds
+             n_sc_bb=hash_nc.count_asn_bb(pdb,q)
+             print('number asn-bb hbonds %s'%n_sc_bb)
+         if not(args.use_hash) or n_sc_bb > 0:
             new_pdb=pdb.clone() 
 	    new_pdb.append_pose_by_jump(q.clone(),1)
  #           params=match[1]
