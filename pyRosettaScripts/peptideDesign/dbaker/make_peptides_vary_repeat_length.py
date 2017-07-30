@@ -2,7 +2,7 @@
 from sys import argv
 from pyrosetta import *
 from pdb_utils_noclass import *
-from pyrosetta.toolbox import pose_from_rcsb
+#from pyrosetta.toolbox import pose_from_rcsb
 from repeat_utils import *
 import random,string
 from math import *
@@ -11,10 +11,12 @@ from xyzMath import *
 import pickle
 from rif.geom.ray_hash import RayRay10dHash
 from rif.geom import Ray
-from rosetta.numeric import xyzVector_double_t as V3
-from rosetta.numeric import xyzMatrix_double_t as M3
+from pyrosetta.rosetta.numeric import xyzVector_double_t as V3
+from pyrosetta.rosetta.numeric import xyzMatrix_double_t as M3
 from hash_subclass import *
 import argparse
+import numpy as np
+
 
 def get_argparse():
     parser = argparse.ArgumentParser(description='Dock de novo generated peptide backbones against repeat proteins')
@@ -30,7 +32,7 @@ def get_argparse():
                    default=[-180.,180.],
                    help='lower and upper limits of peptide phi distribution')
     parser.add_argument('--psi_range', type=float, dest='psi_range', nargs=2,
-                   default=[-180.,189.],
+                   default=[-180.,180.],
                    help='lower and upper limits of peptide psi distribution')
     parser.add_argument('--Nrepeats', type=int, dest='Nrepeats', 
                    default=6,
@@ -55,37 +57,72 @@ def get_argparse():
                    help='maximum difference in helical rotation per repeat (radians) between peptide and repeat protein')
     return parser
 
-def choose_torsions(phi_range,psi_range,aa_type):
-    MAX_TRIES=20
-    ntries=0
-    found=0
-    for i in range(MAX_TRIES):
-      ntries=ntries+1
+def choose_torsions_randomly(phi_range,
+                             psi_range,
+                             aa_name,
+                             MAX_TRIES=20):
+    #MAX_TRIES=20
+    #ntries=0
+    #found=0
+    sfx_rama = rosetta.core.scoring.Ramachandran()
+    res_type = rosetta.core.chemical.aa_from_name(aa_name)
+    for i in xrange(MAX_TRIES):
+      #ntries=ntries+1
       phi = random.uniform(phi_range[0],phi_range[1])
       psi = random.uniform(psi_range[0],psi_range[1])
-      if eval_rama(aa_type,phi,psi) < 1.0:
-        found=1
+      if sfx_rama.eval_rama_score_residue(res_type,phi,psi) < 1.0:
+        #found=1
+	print "Torsions found: %0.3f, %0.3f"%(phi,psi)
         break
 
-    if found==0: print 'no torsions found'
-    return phi,psi  # if not found, then return last phi psi pair sampled
+    return [phi, psi]  # if not found, then return last phi psi pair sampled
+
+
+def choose_torsions_from_linear_scan(phi_range=[-180.,180.],
+                                     psi_range=[-180.,180.],
+                                     phi_step=1.0,
+				     psi_step=1.0,
+                                     aa_name="ASN"):
+    #MAX_TRIES=20
+    #ntries=0
+    #found=0
+    sfx_rama = rosetta.core.scoring.Ramachandran()
+    res_type = rosetta.core.chemical.aa_from_name(aa_name)
+    torsions_list=[]
+    for phi_i in np.arange(phi_range[0],phi_range[1],phi_step):
+        for psi_j in np.arange(psi_range[0],psi_range[1],psi_step):
+            if sfx_rama.eval_rama_score_residue(res_type,phi_i,psi_j) < 1.0:
+                torsions_list.append([phi_i,psi_j])
+    if len(torsions_list) > 0:
+        return torsions_list
+    else:
+        return False
+
 
 def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
   p=Pose()
   pdbs={}
-  length=N_repeats*repeat_L
-  seq=""
-  for i in range(length):seq=seq+"A"
-  rosetta.core.pose.make_pose_from_sequence(p, seq,"fa_standard")
-  torsions=[]
+  peptide_len=N_repeats*repeat_L
+  pyrosetta.rosetta.core.pose.make_pose_from_sequence(p, "A"*peptide_len,"fa_standard")
   helical_params=[]
   phi_psiL=[]
-  for i in range(Nsamples):
-    torsions=[]  
-    for j in range(repeat_L):
-        phi,psi=  choose_torsions(phi_range,psi_range,'THR')
-        torsions.append( (phi,psi) )
-        
+
+  torsions=[]
+  if False:
+      torsions=choose_torsions_randomly(phi_range=phi_range,
+                                        psi_range=psi_range,
+                                        aa_name="ASN",
+                                        MAX_TRIES=20)
+  if True:
+      torsions=choose_torsions_from_linear_scan(phi_range=phi_range,
+                                                psi_range=psi_range,
+                                                phi_step=1.0,
+                                                psi_step=1.0,
+                                                aa_name="ASN")
+
+  print "Test tor:", torsions
+
+  if False:
     
     for start in [1+repeat_L*n for n in range(N_repeats)]:
       
@@ -100,7 +137,7 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
         tor_list.append(torsion[1])
     phi_psiL.append(tor_list)
     
-    if dump_pdb:    p.dump_pdb('test_%s.pdb'%i)
+    #if dump_pdb:    p.dump_pdb('test_%s.pdb'%i)
 
     res1=[Vec(p.residue(1).xyz("N")),Vec(p.residue(1).xyz("CA")),Vec(p.residue(1).xyz("C"))]
     res2=[Vec(p.residue(3).xyz("N")),Vec(p.residue(3).xyz("CA")),Vec(p.residue(3).xyz("C"))]
@@ -145,66 +182,76 @@ def compare_params(pept_gen, DHR,names, trans_threshold, rot_threshold):
                 Nmatch=Nmatch+1
     return Nmatch,matches
 
-
-############################################################
-parser = get_argparse()
-args=parser.parse_args()
-init_pyrosetta()
-#input_file=argv[1] # list of repeat proteins
-##nbins=int(argv[2]) # resolution of docking grid sampling
-#npept=int(argv[3])
-#Nstruct, angle variance, output_pdb
-
-# use generator to avoid memory cost of storing all structures
-print 'set up  peptide backbone generator '
-pept_gen = generate_peptides(args.repeat_length,args.Nrepeats,args.npept,args.phi_range,args.psi_range,0)  #repeat_length, Nstruct, angle variance, output_pdb
-
-print 'get repeat protein params '
-DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file)
-
-print 'generate peptides and compare helical params to those of repeat proteins'
-Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.rot_threshold)
-print('Number of matches: %s '%Nmatch)
-
-if args.use_hash: hash_nc=use_hash_rot(1.0,3.0,args.hash_file)
-for DHR in matches.keys():
-    print DHR, DHR_arcs[DHR],len(matches[DHR])
-    q=rep_structs[DHR]
-    pept_match=[]
-    for i in range(len(matches[DHR])):
-        print 'docking peptide %s'%i
-        p=matches[DHR][i][0]
-        pept_params=matches[DHR][i][1]
-        torsions=matches[DHR][i][2]
-        arc_length=sqrt( pept_params[0]**2 + (pept_params[1] * sin(pept_params[2] )**2  ) )
-        print('%s %.2f %.2f %.2f  %.2f'%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
-        base=DHR.index('.')
-
-        if (args.skip_docking): continue
-        dock_gen=dock_peptide(p,nbins)
-        print 'evaluate number of contacts and clashes for each dock of peptide'
-        good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,20)  #need to fix now that have generator
-
-
-    
-        print 'contacts: ', ntries, len(good_matches),contact_hist
-        for match in good_matches:
-         pdb=match[0].clone()
-         n_sc_bb=0
-         if args.use_hash:
-#  screen matches to count number of asn-bb hbonds
-             n_sc_bb=hash_nc.count_asn_bb(pdb,q)
-             print('number asn-bb hbonds %s'%n_sc_bb)
-         if not(args.use_hash) or n_sc_bb > 0:
-            new_pdb=pdb.clone() 
-	    new_pdb.append_pose_by_jump(q.clone(),1)
- #           params=match[1]
-#            p_index=params[0]
+def main():
+   ############################################################
+   parser = get_argparse()
+   args=parser.parse_args()
+   init_pyrosetta()
+   
+   
+   #input_file=argv[1] # list of repeat proteins
+   ##nbins=int(argv[2]) # resolution of docking grid sampling
+   #npept=int(argv[3])
+   #Nstruct, angle variance, output_pdb
+   
+   # use generator to avoid memory cost of storing all structures
+   print 'set up  peptide backbone generator '
+   pept_gen = generate_peptides(args.repeat_length,
+                                args.Nrepeats,
+                                args.npept,
+                                args.phi_range,
+                                args.psi_range,
+                                True)  #repeat_length, Nstruct, angle variance, bool_output_pdb
+   
+   print 'get repeat protein params '
+   DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file)
+   
+   
+   print 'generate peptides and compare helical params to those of repeat proteins'
+   Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.rot_threshold)
+   print('Number of matches: %s '%Nmatch)
+   
+   """
+   if args.use_hash: hash_nc=use_hash_rot(1.0,3.0,args.hash_file)
+   for DHR in matches.keys():
+      print DHR, DHR_arcs[DHR],len(matches[DHR])
+      q=rep_structs[DHR]
+      pept_match=[]
+      for i in range(len(matches[DHR])):
+         print 'docking peptide %s'%i
+         p=matches[DHR][i][0]
+         pept_params=matches[DHR][i][1]
+         torsions=matches[DHR][i][2]
+         arc_length=sqrt( pept_params[0]**2 + (pept_params[1] * sin(pept_params[2] )**2  ) )
+         print('%s %.2f %.2f %.2f  %.2f'%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
+         base=DHR.index('.')
+         
+         if (args.skip_docking): continue
+         dock_gen=dock_peptide(p,nbins)
+         print 'evaluate number of contacts and clashes for each dock of peptide'
+         good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,20)  #need to fix now that have generator
+         
+         
+            
+         print 'contacts: ', ntries, len(good_matches),contact_hist
+         for match in good_matches:
+            pdb=match[0].clone()
+            n_sc_bb=0
+            if args.use_hash:
+                  n_sc_bb=hash_nc.count_asn_bb(pdb,q)
+                  print('number asn-bb hbonds %s'%n_sc_bb)
+            if not(args.use_hash) or n_sc_bb > 0:
+               new_pdb=pdb.clone() 
+            new_pdb.append_pose_by_jump(q.clone(),1)
             trans=round(pept_params[0],1)
             twist=round(pept_params[2],1)
             angle=round(match[1],2)
             dist=round(match[2],2)
-#        print('%s %s %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f'%(DHR,nangle,dist,torsions[0],torsions[1],torsions[2],torsions[3])) 
+            #     print('%s %s %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f'%(DHR,nangle,dist,torsions[0],torsions[1],torsions[2],torsions[3])) 
             new_pdb.dump_pdb('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR[0:base],n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
             print('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR[0:base],n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
             print('%s %s %s %4.1f %4.1f %4.1f %4.1f %s %s %s %s'%(DHR[0:base],angle,dist,torsions[0],torsions[1],torsions[2],torsions[3],match[2],n_sc_bb,trans,twist))
+   """
+
+if __name__ == "__main__":
+    main()

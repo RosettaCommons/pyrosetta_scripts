@@ -114,6 +114,7 @@ def eval_clashes_and_contacts(complexes,ala_convert):
          contacts = repeat_rose.contacts(pept_rose)
          print(name,clashes,contacts)
 
+#Deprecated, this function is too slow because it generates a efxn every time
 def eval_rama(aa,phi,psi):
     sf = rosetta.core.scoring.Ramachandran()
     res_type = rosetta.core.chemical.aa_from_name(aa)
@@ -123,26 +124,30 @@ def eval_rama(aa,phi,psi):
 def calc_repeat_protein_params_ws(input_file):
  verbose=0   
  p=Pose()
+ #contains a list of pairs that specify the input PDB file and the size of a single repeat
  rep_file=map(string.split,open(input_file,'r').readlines())
+
+ #Here we create the helical parameters and identify its helical parameters, 
+ #I suspect the helical parameter function is incomplete and will fail to capture
+ #many cases that fit the geometry too
  helical_params=[]
  helical_params2=[]
  helical_params3=[]
  names=[]
  lengths=[]
  pdbs={}
- first=70
+ first=70  #What is this 70???
  for line in rep_file:
-
-     struct_dir = "/work/baker/repeat_peptide/designs/"
-     DHR_file=struct_dir+line[0]
-     DHR=string.split(line[0],'.')[0]
+     #Remove the .pdb from the input name, I don't think that is necessary, 
+     #but OK... many cases will not comply with this.
+     DHR_file=line[0]
 
      length=int(line[1])
      lengths.append(length)
 
-     names.append(DHR)
+     names.append(DHR_file)
 
-     if verbose: print DHR_file,DHR,length
+     if verbose: print DHR_file,length
      ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
      p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
 
@@ -163,11 +168,13 @@ def calc_repeat_protein_params_ws(input_file):
      rosetta.core.pose.create_subpose(p, repeat1_sel, ft, repeat1)
      repeat2 = rosetta.core.pose.Pose()
      rosetta.core.pose.create_subpose(p, repeat2_sel, ft, repeat2)
+
     # repeat1 and repeat2 are poses with adjacent repeat
     # segments, with identical length
     # now create an exact copy of repeat1, then superimpose it onto repeat2
     # this is basically a way to get the superposition xform, which is not
     # readily available from rosetta (that I am aware of)
+
      repeat1_onto_2 = rosetta.core.pose.Pose(repeat1)
      rms = rosetta.core.scoring.calpha_superimpose_pose(repeat1_onto_2, repeat2)
      if verbose: print 'rms is', rms
@@ -178,7 +185,7 @@ def calc_repeat_protein_params_ws(input_file):
      p=center_on_z_axis(res1,res2,p.clone())
 
     #  p.dump_pdb('%s_tf.pdb'%DHR)
-     pdbs[DHR]=p.clone()
+     pdbs[DHR_file]=p.clone()
 
  print('name repeat_length trans radius angle arc_length')
  helical_arcs={}
