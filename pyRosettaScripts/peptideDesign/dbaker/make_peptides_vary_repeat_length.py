@@ -158,7 +158,7 @@ print 'get repeat protein params '
 DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file)
 
 print 'generate peptides and compare helical params to those of repeat proteins'
-Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.repeat_threshold)
+Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.rot_threshold)
 print('Number of matches: %s '%Nmatch)
 
 if args.use_hash: hash_nc=use_hash_rot(1.0,3.0,args.hash_file)
