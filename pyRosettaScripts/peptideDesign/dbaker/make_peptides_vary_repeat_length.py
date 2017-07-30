@@ -29,10 +29,10 @@ def get_argparse():
     parser.add_argument('--phi_range', type=float, dest='phi_range', nargs=2,
                    default=[-180.,180.],
                    help='lower and upper limits of peptide phi distribution')
-    parser.add_argument('--psi_range', type=float, dest='phi_range', nargs=2,
+    parser.add_argument('--psi_range', type=float, dest='psi_range', nargs=2,
                    default=[-180.,189.],
                    help='lower and upper limits of peptide psi distribution')
-    parser.add_argument('--Nrepeats', type=int, dest='Nrepeat', 
+    parser.add_argument('--Nrepeats', type=int, dest='Nrepeats', 
                    default=6,
                    help='number of repeat units in peptide')
     parser.add_argument('--repeat_length', type=int, dest='repeat_length', 
@@ -53,7 +53,8 @@ def get_argparse():
     parser.add_argument('--repeat_match_rot', type=float, dest='rot_threshold', 
                    default='0.2',
                    help='maximum difference in helical rotation per repeat (radians) between peptide and repeat protein')
- 
+    return parser
+
 def choose_torsions(phi_range,psi_range,aa_type):
     MAX_TRIES=20
     ntries=0
@@ -139,8 +140,9 @@ def compare_params(pept_gen, DHR,names, trans_threshold, rot_threshold):
                 Nmatch=Nmatch+1
     return Nmatch,matches
 
+
 ############################################################
-get_argparse()
+parser = get_argparse()
 args=parser.parse_args()
 init_pyrosetta()
 #input_file=argv[1] # list of repeat proteins
@@ -150,7 +152,7 @@ init_pyrosetta()
 
 # use generator to avoid memory cost of storing all structures
 print 'set up  peptide backbone generator '
-pept_gen = generate_peptides(args.repeat_length,args.Nrepeats,args.npept,args.phi,args.psi,0)  #repeat_length, Nstruct, angle variance, output_pdb
+pept_gen = generate_peptides(args.repeat_length,args.Nrepeats,args.npept,args.phi_range,args.psi_range,0)  #repeat_length, Nstruct, angle variance, output_pdb
 
 print 'get repeat protein params '
 DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file)
@@ -161,7 +163,7 @@ print('Number of matches: %s '%Nmatch)
 
 if args.use_hash: hash_nc=use_hash_rot(1.0,3.0,args.hash_file)
 for DHR in matches.keys():
-    print DHR_arcs[DHR],len(matches[DHR])
+    print DHR, DHR_arcs[DHR],len(matches[DHR])
     q=rep_structs[DHR]
     pept_match=[]
     for i in range(len(matches[DHR])):

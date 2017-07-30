@@ -93,7 +93,7 @@ def eval_clashes_and_contacts(complexes,ala_convert):
      rep_pose.dump_pdb('repeat.pdb')
      rep_pose=convert_to_ala(rep_pose.clone())
      rep_pose.dump_pdb('repeat_ala.pdb')
-   repeat_rose=Rose(rep_pose) # just take repeat protein from 1st complex   
+   repeat_rose=Rose(rep_pose) # just take repeat protein from 1st complex
 #   clashes=[]
 #   contacts=[]
    for complex in complexes:
@@ -121,6 +121,7 @@ def eval_rama(aa,phi,psi):
     return score
 
 def calc_repeat_protein_params_ws(input_file):
+ verbose=0   
  p=Pose()
  rep_file=map(string.split,open(input_file,'r').readlines())
  helical_params=[]
@@ -131,18 +132,20 @@ def calc_repeat_protein_params_ws(input_file):
  pdbs={}
  first=70
  for line in rep_file:
-     DHR_file=line[0]
 
-     DHR_base=string.split(line[0],'/')[-1]
-     base=DHR_base.index('.')
-     DHR=DHR_base[:base]
+     struct_dir = "/work/baker/repeat_peptide/designs/"
+     DHR_file=struct_dir+line[0]
+     DHR=string.split(line[0],'.')[0]
+
      length=int(line[1])
      lengths.append(length)
+
      names.append(DHR)
-     print DHR_file,DHR,length
- #    p=rosetta.core.import_pose.pose_from_file('/work/baker/repeat_peptide/designs/%s'%DHR_file) 
-     p=convert_to_ala(rosetta.core.import_pose.pose_from_file('/work/baker/repeat_peptide/designs/%s'%DHR_file)) 
-  
+
+     if verbose: print DHR_file,DHR,length
+     ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
+     p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
+
      repeat1_start = first
      repeat1_stop = first+length-1
      repeat2_start = first+length
@@ -167,13 +170,13 @@ def calc_repeat_protein_params_ws(input_file):
     # readily available from rosetta (that I am aware of)
      repeat1_onto_2 = rosetta.core.pose.Pose(repeat1)
      rms = rosetta.core.scoring.calpha_superimpose_pose(repeat1_onto_2, repeat2)
-     print 'rms is', rms
+     if verbose: print 'rms is', rms
      res1 = [Vec(repeat1.residue(1).xyz('N')),  Vec(repeat1.residue(1).xyz('CA')), Vec(repeat1.residue(1).xyz('C'))]
      res2 = [Vec(repeat1_onto_2.residue(1).xyz('N')),Vec(repeat1_onto_2.residue(1).xyz('CA')), Vec(repeat1_onto_2.residue(1).xyz('C'))]
      trans, radius, ang = get_helix_params(res1,res2)
      helical_params.append( (trans, radius, ang) )
      p=center_on_z_axis(res1,res2,p.clone())
- 
+
     #  p.dump_pdb('%s_tf.pdb'%DHR)
      pdbs[DHR]=p.clone()
 
@@ -182,7 +185,7 @@ def calc_repeat_protein_params_ws(input_file):
  for i in range(len(helical_params)):
     arc_length=sqrt( (helical_params[i][0])**2 +( ((helical_params[i][1]) * sin(helical_params[i][2] ))**2 ) )
 #    print('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length))
-    helical_arcs[names[i]]='%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)    
+    helical_arcs[names[i]]='%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)
  return helical_params, helical_arcs, names, lengths, pdbs
 
 def calc_repeat_protein_params():
@@ -199,11 +202,11 @@ def calc_repeat_protein_params():
      length=int(line[1])
      lengths.append(length)
      names.append(DHR)
-     p=rosetta.core.import_pose.pose_from_file('../designs/%s'%DHR)     
+     p=rosetta.core.import_pose.pose_from_file('../designs/%s'%DHR)
      res1=[Vec(p.residue(first).xyz("N")),Vec(p.residue(first).xyz("CA")),Vec(p.residue(first).xyz("C"))]
      res2=[Vec(p.residue(length+first).xyz("N")),Vec(p.residue(length+first).xyz("CA")),Vec(p.residue(length+first).xyz("C"))]
-     res3=[Vec(p.residue(first+2*length).xyz("N")),Vec(p.residue(first+2*length).xyz("CA")),Vec(p.residue(first+2*length).xyz("C"))]      
-     res4=[Vec(p.residue(first+3*length).xyz("N")),Vec(p.residue(first+3*length).xyz("CA")),Vec(p.residue(first+3*length).xyz("C"))]      
+     res3=[Vec(p.residue(first+2*length).xyz("N")),Vec(p.residue(first+2*length).xyz("CA")),Vec(p.residue(first+2*length).xyz("C"))]
+     res4=[Vec(p.residue(first+3*length).xyz("N")),Vec(p.residue(first+3*length).xyz("CA")),Vec(p.residue(first+3*length).xyz("C"))]
      trans1, radius1, ang1 = get_helix_params(res1,res2)
      trans2, radius2, ang2 = get_helix_params(res2,res3)
      trans3, radius3, ang3 = get_helix_params(res3,res4)
@@ -213,7 +216,7 @@ def calc_repeat_protein_params():
      p=center_on_z_axis(res2,res3,p)
 
      p.dump_pdb('%s_tf.pdb'%DHR[0:base])
-     
+
  return helical_params, helical_params2, helical_params3,names,lengths
 
 def center_on_z_axis(res1,res2,pose):
@@ -234,7 +237,7 @@ def center_on_z_axis(res1,res2,pose):
             oldxyz = Vec(pose.xyz(aid))
             newxyz = transform * oldxyz
             pose.set_xyz(aid, newxyz.to_rosetta())
-     
+
     return center_com_z(pose.clone())
 
 def rotate_around_z(axis,angle,pose):
@@ -293,7 +296,7 @@ def test():
     p=rosetta.core.import_pose.pose_from_file("DHR7.pdb")
     res1=[Vec(p.residue(50).xyz("N")),Vec(p.residue(50).xyz("CA")),Vec(p.residue(50).xyz("C"))]
     res2=[Vec(p.residue(92).xyz("N")),Vec(p.residue(92).xyz("CA")),Vec(p.residue(92).xyz("C"))]
-    res3=[Vec(p.residue(134).xyz("N")),Vec(p.residue(134).xyz("CA")),Vec(p.residue(134).xyz("C"))]    
+    res3=[Vec(p.residue(134).xyz("N")),Vec(p.residue(134).xyz("CA")),Vec(p.residue(134).xyz("C"))]
     new_pose=center_on_z_axis(res2,res3,p.clone())
     p.dump_pdb('DHR7_tf.pdb')
 
