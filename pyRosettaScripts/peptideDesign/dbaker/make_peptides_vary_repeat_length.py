@@ -81,20 +81,25 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
   helical_params=[]
   phi_psiL=[]
   for i in range(Nsamples):
+    torsions=[]  
     for j in range(repeat_L):
         phi,psi=  choose_torsions(phi_range,psi_range,'THR')
-        phi_psiL.append(phi)
-        phi_psiL.append(psi)
-        
         torsions.append( (phi,psi) )
+        
     
     for start in [1+repeat_L*n for n in range(N_repeats)]:
       
       for k in range(repeat_L):  
-        p.set_phi(start+k,phi[k])
-        p.set_psi(start+k,psi[k])
+        p.set_phi(start+k,torsions[k][0])
+        p.set_psi(start+k,torsions[k][1])
         p.set_omega(j,180.)
 
+    tor_list=[]
+    for torsion in torsions:
+        tor_list.append(torsion[0])
+        tor_list.append(torsion[1])
+    phi_psiL.append(tor_list)
+    
     if dump_pdb:    p.dump_pdb('test_%s.pdb'%i)
 
     res1=[Vec(p.residue(1).xyz("N")),Vec(p.residue(1).xyz("CA")),Vec(p.residue(1).xyz("C"))]
@@ -104,6 +109,7 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
     p=center_on_z_axis(res1,res2,p)
     pdbs[i]=p.clone()
     if dump_pdb:   p.dump_pdb('test_%s_tf.pdb'%i)
+    
     yield phi_psiL, p.clone(), (trans,radius,ang)
   # return torsions, pdbs, helical_params
 
