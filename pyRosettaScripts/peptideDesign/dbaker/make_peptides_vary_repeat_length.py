@@ -79,8 +79,7 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
   rosetta.core.pose.make_pose_from_sequence(p, seq,"fa_standard")
   torsions=[]
   helical_params=[]
-  phiL=[]
-  psiL=[]
+  phi_psiL=[]
   for i in range(Nsamples):
     for j in range(repeat_L):
         phi,psi=  choose_torsions(phi_range,psi_range,'THR')
