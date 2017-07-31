@@ -206,7 +206,11 @@ for DHR in matches.keys():
             twist=round(pept_params[2],1)
             angle=round(match[1],2)
             dist=round(match[2],2)
-#        print('%s %s %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f'%(DHR,nangle,dist,torsions[0],torsions[1],torsions[2],torsions[3]))
-            new_pdb.dump_pdb('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR[0:base],n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
-            print('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR[0:base],n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
-            print('%s %s %s %4.1f %4.1f %4.1f %4.1f %s %s %s %s'%(DHR[0:base],angle,dist,torsions[0],torsions[1],torsions[2],torsions[3],match[2],n_sc_bb,trans,twist))
+
+            torsions_string ='_'.join(['%4.1f' % (t,) for t in torsions])
+
+            new_pdb.dump_pdb('%s_%s_%s_%s_%s.pdb'%(DHR[0:base],n_sc_bb,torsions_string,angle,dist))
+            print('%s_%s_%s_%s_%s.pdb'%(DHR[0:base],n_sc_bb,torsions_string,angle,dist))
+
+            torsions_string_space =' '.join(['%4.1f' % (t,) for t in torsions])
+            print('%s %s %s %s %s %s %s %s'%(DHR[0:base],angle,dist,torsions_string_space,match[2],n_sc_bb,trans,twist))
