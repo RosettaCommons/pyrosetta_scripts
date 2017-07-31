@@ -1,4 +1,4 @@
-#!/home/sheffler/venv/david/bin/ipython
+#!/home/sheffler/venv/david/bin/python
 from sys import argv
 from pyrosetta import *
 from pdb_utils_noclass import *
@@ -33,7 +33,7 @@ def choose_torsions(frange,aa_type):
 def generate_peptides(unit_length,Nsamples,frange,dump_pdb):
   p=Pose()
   pdbs={}
-  N_repeats=14//unit_length ## reasons for using 14? 2 heptad repeats?
+  N_repeats=18//unit_length ## reasons for using 14? 2 heptad repeats?
   length=N_repeats*unit_length
   seq=""
   for i in range(length):seq=seq+"A"
@@ -141,7 +141,9 @@ Nmatch, matches=compare_params(pept_gen,DHR_params,names)
 print(matches)
 print('Number of matches: %s '%Nmatch)
 
-hash_nc=use_hash_rot(1.0,3.0,"bb_asn_dict_combo_1.0_rot0")
+use_hash = 0
+if use_hash:
+    hash_nc=use_hash_rot(1.0,3.0,"bb_asn_dict_combo_1.0_rot0")
 for DHR in matches.keys():
     print DHR_arcs[DHR],len(matches[DHR])
     q=rep_structs[DHR]
@@ -158,24 +160,32 @@ for DHR in matches.keys():
         ## continue
         dock_gen=dock_peptide(p,nbins)
         print 'evaluate number of contacts and clashes for each dock of peptide'
-        good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,20)
+        good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,30)
 
 # now screen matches to count number of asn-bb hbonds
         print 'contacts: ', ntries, len(good_matches),contact_hist
         for match in good_matches:
-         pdb=match[0].clone()
-         n_sc_bb=hash_nc.count_asn_bb(pdb,q)
-         print('number asn-bb hbonds %s'%n_sc_bb)
-         if n_sc_bb > 0:
+            pdb=match[0].clone()
+            if use_hash:
+                n_sc_bb=hash_nc.count_asn_bb(pdb,q)
+                print('number asn-bb hbonds %s'%n_sc_bb)
+                if n_sc_bb > 0:
+                    new_pdb=pdb.clone()
+	            new_pdb.append_pose_by_jump(q.clone(),1)
+ #               params=match[1]
+#                p_index=params[0]
             new_pdb=pdb.clone()
 	    new_pdb.append_pose_by_jump(q.clone(),1)
- #           params=match[1]
-#            p_index=params[0]
+
             trans=round(pept_params[0],1)
             twist=round(pept_params[2],1)
             angle=round(match[1],2)
             dist=round(match[2],2)
 #        print('%s %s %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f'%(DHR,nangle,dist,torsions[0],torsions[1],torsions[2],torsions[3]))
-            new_pdb.dump_pdb('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR,n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
-            print('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR,n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
-            print('%s %s %s %4.1f %4.1f %4.1f %4.1f %s %s %s %s'%(DHR,angle,dist,torsions[0],torsions[1],torsions[2],torsions[3],match[2],n_sc_bb,trans,twist))
+            new_pdb.dump_pdb('%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
+            print('%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
+            print('%s %s %s %4.1f %4.1f %4.1f %4.1f %s %s %s'%(DHR,angle,dist,torsions[0],torsions[1],torsions[2],torsions[3],match[2],trans,twist))
+            if use_hash:
+                new_pdb.dump_pdb('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR,n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
+                print('%s_%s_%4.1f_%4.1f_%4.1f_%4.1f_%s_%s.pdb'%(DHR,n_sc_bb,torsions[0],torsions[1],torsions[2],torsions[3],angle,dist))
+                print('%s %s %s %4.1f %4.1f %4.1f %4.1f %s %s %s %s'%(DHR,angle,dist,torsions[0],torsions[1],torsions[2],torsions[3],match[2],n_sc_bb,trans,twist))
