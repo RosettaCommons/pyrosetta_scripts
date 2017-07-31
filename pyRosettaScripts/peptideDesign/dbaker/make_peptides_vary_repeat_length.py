@@ -101,7 +101,7 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
     if dump_pdb:    p.dump_pdb('test_%s.pdb'%i)
 
     res1=[Vec(p.residue(1).xyz("N")),Vec(p.residue(1).xyz("CA")),Vec(p.residue(1).xyz("C"))]
-    res2=[Vec(p.residue(3).xyz("N")),Vec(p.residue(3).xyz("CA")),Vec(p.residue(3).xyz("C"))]
+    res2=[Vec(p.residue(repeat_L+1).xyz("N")),Vec(p.residue(repeat_L+1).xyz("CA")),Vec(p.residue(repeat_L+1).xyz("C"))]
     trans, radius, ang =  get_helix_params(res1,res2)
     helical_params.append( (trans,radius,ang) )
     p=center_on_z_axis(res1,res2,p)
@@ -133,6 +133,8 @@ def compare_params(pept_gen, DHR,names, trans_threshold, rot_threshold):
         matches[d]=[]
     #for j in range(len(pept)):
     for torsions, pdb, p in pept_gen:
+	#print pdb,pdb.phi(4),pdb.psi(4)
+	#print torsions
         for i in range(len(DHR)):
             d=DHR[i]
             for n in range(1,4): # check for 1 - 2 peptide repeats equivalent to 1 repeat protein repeat
