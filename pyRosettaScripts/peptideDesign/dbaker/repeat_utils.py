@@ -120,8 +120,8 @@ def eval_rama(aa,phi,psi):
     score=sf.eval_rama_score_residue(res_type,phi,psi)
     return score
 
-def calc_repeat_protein_params_ws(input_file):
- verbose=0   
+def calc_repeat_protein_params_ws(input_file, struct_dir):
+ verbose=0
  p=Pose()
  rep_file=map(string.split,open(input_file,'r').readlines())
  helical_params=[]
@@ -133,7 +133,7 @@ def calc_repeat_protein_params_ws(input_file):
  first=70
  for line in rep_file:
 
-     struct_dir = "/work/baker/repeat_peptide/designs/"
+     # struct_dir = "/work/baker/repeat_peptide/designs/"
      DHR_file=struct_dir+line[0]
      DHR=string.split(line[0],'.')[0]
 

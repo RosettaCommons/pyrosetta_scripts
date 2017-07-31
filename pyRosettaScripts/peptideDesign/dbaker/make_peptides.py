@@ -53,6 +53,9 @@ def get_argparse():
     parser.add_argument('--repeat_match_rot', type=float, dest='rot_threshold',
                    default='0.2',
                    help='maximum difference in helical rotation per repeat (radians) between peptide and repeat protein')
+    parser.add_argument('--struct_dir', type=str, dest='struct_dir',
+                   default="/work/baker/repeat_peptide/designs/",
+                   help='This is where the repeat protein designs/xtals pdbs are located')
     return parser
 
 def choose_torsions(phi_range,psi_range,aa_type):
@@ -160,7 +163,7 @@ print 'set up  peptide backbone generator '
 pept_gen = generate_peptides(args.repeat_length,args.Nrepeats,args.npept,args.phi_range,args.psi_range,0)  #repeat_length, Nstruct, angle variance, output_pdb
 
 print 'get repeat protein params '
-DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file)
+DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file,args.struct_dir)
 
 print 'generate peptides and compare helical params to those of repeat proteins'
 Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.rot_threshold)
