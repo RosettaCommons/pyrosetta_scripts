@@ -99,14 +99,17 @@ def rotation_axis_center(X):
 
 
 def get_helix_params(res1,res2):
-#    print res1
+    #print "DEBUG, res1:", res1
+    #print "DEBUG, res2:", res2
     stub1 = stub(res1[0],res1[1],res1[2])
     stub2 = stub(res2[0],res2[1],res2[2])
     xform = stub2 * ~stub1
     #Some error here: 
     #File "/home/sheffler/venv/david/local/lib/python2.7/site-packages/xyzMath.py", line 892, in rotation_axis_center
     #assert(abs((p1 - p0).dot(axis)) < 0.000001)
-    print "DEBUG:", stub1, stub2, xform
+    #print "DEBUG: stub1:", stub1
+    #print "DEBUG: stub2:", stub2
+    #print "DEBUG: xform:", xform
 
     axis, ang, cen = xform.rotation_axis_center()
     translation_along_axis_of_rotation = axis.dot(xform.t)
