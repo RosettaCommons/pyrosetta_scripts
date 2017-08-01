@@ -166,7 +166,76 @@ def eval_rama(aa,phi,psi):
     score=sf.eval_rama_score_residue(res_type,phi,psi)
     return score
 
-def calc_repeat_protein_params_ws(input_file):
+def calc_repeat_protein_params_ws(input_file, struct_dir):
+ verbose=0
+ p=Pose()
+ rep_file=map(string.split,open(input_file,'r').readlines())
+ helical_params=[]
+ helical_params2=[]
+ helical_params3=[]
+ names=[]
+ lengths=[]
+ pdbs={}
+ first=70
+ for line in rep_file:
+
+     # struct_dir = "/work/baker/repeat_peptide/designs/"
+     DHR_file=struct_dir+line[0]
+     DHR=string.split(line[0],'.')[0]
+
+     length=int(line[1])
+     lengths.append(length)
+
+     names.append(DHR)
+
+     if verbose: print DHR_file,DHR,length
+     ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
+     p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
+
+     repeat1_start = first
+     repeat1_stop = first+length-1
+     repeat2_start = first+length
+     repeat2_stop = first +length*2 -1
+
+     repeat1_sel = rosetta.utility.vector1_unsigned_long()
+     repeat2_sel = rosetta.utility.vector1_unsigned_long()
+     for i in range(repeat1_start, repeat1_stop + 1):
+        repeat1_sel.append(i)
+     for i in range(repeat2_start, repeat2_stop + 1):
+        repeat2_sel.append(i)
+
+     ft = rosetta.core.kinematics.FoldTree(repeat1_stop - repeat1_start + 1)
+     repeat1 = rosetta.core.pose.Pose()
+     rosetta.core.pose.create_subpose(p, repeat1_sel, ft, repeat1)
+     repeat2 = rosetta.core.pose.Pose()
+     rosetta.core.pose.create_subpose(p, repeat2_sel, ft, repeat2)
+    # repeat1 and repeat2 are poses with adjacent repeat
+    # segments, with identical length
+    # now create an exact copy of repeat1, then superimpose it onto repeat2
+    # this is basically a way to get the superposition xform, which is not
+    # readily available from rosetta (that I am aware of)
+     repeat1_onto_2 = rosetta.core.pose.Pose(repeat1)
+     rms = rosetta.core.scoring.calpha_superimpose_pose(repeat1_onto_2, repeat2)
+     if verbose: print 'rms is', rms
+     res1 = [Vec(repeat1.residue(1).xyz('N')),  Vec(repeat1.residue(1).xyz('CA')), Vec(repeat1.residue(1).xyz('C'))]
+     res2 = [Vec(repeat1_onto_2.residue(1).xyz('N')),Vec(repeat1_onto_2.residue(1).xyz('CA')), Vec(repeat1_onto_2.residue(1).xyz('C'))]
+     trans, radius, ang = get_helix_params(res1,res2)
+     helical_params.append( (trans, radius, ang) )
+     p=center_on_z_axis(res1,res2,p.clone())
+
+    #  p.dump_pdb('%s_tf.pdb'%DHR)
+     pdbs[DHR]=p.clone()
+
+ print('name repeat_length trans radius angle arc_length')
+ helical_arcs={}
+ for i in range(len(helical_params)):
+    arc_length=sqrt( (helical_params[i][0])**2 +( ((helical_params[i][1]) * sin(helical_params[i][2] ))**2 ) )
+    print('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length))
+    helical_arcs[names[i]]='%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)
+ return helical_params, helical_arcs, names, lengths, pdbs
+
+
+def calc_repeat_protein_params_ws_simple(input_file):
  verbose=0   
  p=Pose()
  #contains a list of pairs that specify the input PDB file and the size of a single repeat
@@ -186,6 +255,9 @@ def calc_repeat_protein_params_ws(input_file):
      #Remove the .pdb from the input name, I don't think that is necessary, 
      #but OK... many cases will not comply with this.
      DHR_file=line[0]
+     
+     if(struct_dir):
+         DHR_file=struct_dir+line[0]
 
      length=int(line[1])
      lengths.append(length)

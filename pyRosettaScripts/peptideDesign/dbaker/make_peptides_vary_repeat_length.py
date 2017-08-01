@@ -113,6 +113,8 @@ def compare_params(pept_gen, DHR,names):
         matches[d]=[]
     #for j in range(len(pept)):
     for torsions, pdb, p in pept_gen:
+	#print pdb,pdb.phi(4),pdb.psi(4)
+	#print torsions
         for i in range(len(DHR)):
             d=DHR[i]
             for n in range(1,3): # check for 1 or 2 peptide repeats equivalent to 1 repeat protein repeat
@@ -156,8 +158,6 @@ for DHR in matches.keys():
         arc_length=sqrt( pept_params[0]**2 + (pept_params[1] * sin(pept_params[2] )**2  ) )
         print('%s %.2f %.2f %.2f  %.2f'%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
         base=DHR
-
-        ## continue
         dock_gen=dock_peptide(p,nbins)
         print 'evaluate number of contacts and clashes for each dock of peptide'
         good_matches,contact_hist, ntries=eval_contacts_pair(q,dock_gen,30)
