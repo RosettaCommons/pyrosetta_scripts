@@ -256,9 +256,6 @@ def calc_repeat_protein_params_ws_simple(input_file):
      #but OK... many cases will not comply with this.
      DHR_file=line[0]
      
-     if(struct_dir):
-         DHR_file=struct_dir+line[0]
-
      length=int(line[1])
      lengths.append(length)
 

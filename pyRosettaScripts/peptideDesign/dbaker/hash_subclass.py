@@ -144,7 +144,7 @@ class use_hash(bb_hash):
              mr.apply(pose)
              
     def count_asn_bb(self,pept,prot):
-        mr = protocols.simple_moves.MutateResidue()
+        #mr = protocols.simple_moves.MutateResidue()
         nhb=0
         prot_residues=[prot.residue(i) for i in range(2,prot.size())] #skip termini as atom types differ
         pept_residues=[pept.residue(i) for i in range(2,pept.size())]
@@ -206,6 +206,19 @@ class use_hash_rot(bb_hash):
         
         return nhb
 
+    def match_bbframes_fast(self,
+                                 frames_dic,
+                                 pept):
+          res_list=[]
+          for i in frames_dic:
+             for j in range(2,pept.size()):
+                bb_rays=self.get_bb_rays_from_res(pept.residue(j))
+                k=self.get_bin_from_rot_and_frame(bb_rays,frames_dic[i])
+                if k in self.dd: 
+                    res_list.append([i,j])
+          return res_list
+            
+
     def get_all_rots(self,pept,prot):
         rots={}
         nhb=0
@@ -246,16 +259,28 @@ if __name__ == "__main__":
 #    hash_chi=use_hash_rot(1.0,3.0,"bb_asn_hash_combo_new_ray_1.0_rot0")
 #    hash_nc=use_hash(1.0,3.0,"bb_asn_hash_combo_new_ray_1.0_rot0")
     hash_nc=use_hash_rot(1.0,3.0,"bb_asn_dict_combo_1.0_rot0")
+    #hash_nc_dic=pickle.load(open("bb_asn_dict_combo_1.0_rot0","rb"))
+    
+    #DASM: precatch the target frames for speed
+    frames_dic={}
+    for i in range(2,prot.size()):
+        frames_dic[i]=hash_nc.get_frame_from_res(prot.residue(i))
+    ##Now match against the precached target-frames
+    hash_nc.match_bbframes_fast(frames_dic,
+                                pept )
+
+    #hash_nc.count_asn_bb_frames_vs_peptide()
+
     nhb=hash_nc.count_asn_bb(pept,prot)
 #    s=hash_nc.convert_to_set()
 #    pickle.dump(s,open("bb_asn_dict_combo_1.0_set","wb"))
-    print nhb
-    pdb_list=map(string.split,open('pdb.list','r').readlines())
-    for pdb in pdb_list:
-        p=rosetta.core.import_pose.pose_from_file(pdb[0])
-        pept,prot=p.split_by_chain()
-        nhb=hash_nc.count_asn_bb(pept,prot)
-        print nhb,pdb
+#    print nhb
+    #pdb_list=map(string.split,open('pdb.list','r').readlines())
+    #for pdb in pdb_list:
+    #    p=rosetta.core.import_pose.pose_from_file(pdb[0])
+    #    pept,prot=p.split_by_chain()
+    #    nhb=hash_nc.count_asn_bb(pept,prot)
+    #    print nhb,pdb
         
     #    prot.dump_pdb('%s.pdb'%nhb)
     

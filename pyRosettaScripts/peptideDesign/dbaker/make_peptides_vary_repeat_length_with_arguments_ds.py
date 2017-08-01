@@ -36,10 +36,10 @@ def get_argparse():
                    default=[-180.,180.],
                    help='lower and upper limits of peptide psi distribution')
     parser.add_argument('--phi_step', type=float, dest='phi_step', nargs=1,
-                   default=10,
+                   default=3,
                    help='')
     parser.add_argument('--psi_step', type=float, dest='psi_step', nargs=1,
-                   default=10,
+                   default=3,
                    help='')
     parser.add_argument('--Nrepeats', type=int, dest='Nrepeats', 
                    default=6,
@@ -87,11 +87,7 @@ def choose_torsions_randomly(phi_range,
 	print "Rand torsions found: %0.3f, %0.3f"%(phi,psi)
         torsions_list.append([phi,psi])
 
-    if len(torsions_list) > 0:
-        return torsions_list
-    else:
-        return False
-    #return [phi, psi]  # if not found, then return last phi psi pair sampled
+    return torsions_list
 
 
 def choose_torsions_from_linear_scan(phi_range=[-180.,180.],
@@ -108,10 +104,7 @@ def choose_torsions_from_linear_scan(phi_range=[-180.,180.],
         for psi_j in np.arange(psi_range[0],psi_range[1]+phi_step,psi_step):
             if sfx_rama.eval_rama_score_residue(res_type,phi_i,psi_j) < rama_score_limit:
                 torsions_list.append([phi_i,psi_j])
-    if len(torsions_list) > 0:
-        return torsions_list
-    else:
-        return False
+    return torsions_list
 
 def switch_pose_to_centroid(in_pose):
   switchToCentroid = SwitchResidueTypeSetMover("centroid")
@@ -292,7 +285,10 @@ def main():
                                   max_matches=args.npept,
                                   b_dump_pdb=True ) #Return: p.clone(),params,torsions
    print('Number of matches: %s '%Nmatch)
-   
+  
+   hash_nc=None
+   if (args.use_hash==True):
+       hash_nc=use_hash_rot(1.0, 3.0, args.hash_file)
    for DHR in matches.keys():
       #print DHR, DHR_arcs[DHR],len(matches[DHR])
       q=rep_structs[DHR]
@@ -300,6 +296,12 @@ def main():
       for i in range(len(matches[DHR])):
          print 'docking peptide %s'%i
          p=matches[DHR][i][0]
+
+         #DASM: precatch the target hash frames for speed
+         p_frames_dic={}
+         if (args.use_hash==True):
+             for i in range(2,p.size()):
+                 p_frames_dic[i]=hash_nc.get_frame_from_res(p.residue(i))
 
          pept_params=matches[DHR][i][1]
          torsions=matches[DHR][i][2]
@@ -316,22 +318,27 @@ def main():
          
             
          print 'Trial %d, matches: %d '%(ntries, len(good_matches))
+         tmp_count=0
          for match in good_matches:
-            new_pdb=match[0].clone()
-            n_sc_bb=0
+            tmp_count+=1
+            #new_pdb=match[0].clone()
+            #n_sc_bb=0
             if (args.use_hash==True):
-                  hash_nc=use_hash_rot(1.0,3.0,args.hash_file)
-                  n_sc_bb=hash_nc.count_asn_bb(new_pdb,q)
-                  print('number asn-bb hbonds %s'%n_sc_bb)
-            if (args.use_hash==False) or n_sc_bb > 0:
-               new_pdb=pdb.clone() 
+                ##Now match against the precached target-frames
+                hash_matches=hash_nc.match_bbframes_fast(p_frames_dic,
+                                                         match[0] )
+                #n_sc_bb=hash_nc.count_asn_bb(new_pdb,q)
+                print 'M#%d: Number of asn_bb hash-filter matched: %d' % (tmp_count, len(hash_matches)) 
+            if (args.use_hash==False) or (len(hash_matches) > 0):
+               #new_pdb=pdb.clone() 
+               new_pdb=match[0].clone()
                new_pdb.append_pose_by_jump(q.clone(),1)
                trans=round(pept_params[0],1)
                twist=round(pept_params[2],1)
                angle=round(match[1],2)
                dist=round(match[2],2)
 
-               out_name="testpdbs/%s_%s_%s_%0.2f_%0.2f_%0.2f.pdb"%(os.path.basename(DHR)[:-4],
+               out_name="results/%s_%s_%s_%0.2f_%0.2f_%0.2f.pdb"%(os.path.basename(DHR)[:-4],
                                                                 n_sc_bb,
                                                                 str(torsions).replace(" ", "").replace("[", "").replace("]", "").replace(",", ""),
                                                                 angle,
