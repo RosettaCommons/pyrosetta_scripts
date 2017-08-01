@@ -180,8 +180,11 @@ for DHR in matches.keys():
         pept_params=matches[DHR][i][1]
         torsions=matches[DHR][i][2]
         arc_length=sqrt( pept_params[0]**2 + (pept_params[1] * sin(pept_params[2] )**2  ) )
-        print('%s %.2f %.2f %.2f  %.2f '%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
-        print(torsions)
+        str='%s %.2f %.2f %.2f  %.2f '%(i,pept_params[0],pept_params[1],pept_params[2],arc_length)
+        for tor in torsions: str+=' %.2f '%tor
+        print str
+#        print('%s %.2f %.2f %.2f  %.2f '%(i,pept_params[0],pept_params[1],pept_params[2],arc_length))
+#        print(torsions)
         if '.' in DHR:
             base=DHR.index('.')
         else:
