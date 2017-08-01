@@ -64,15 +64,57 @@ def ran_range(frange):
     return random.uniform(-frange,+frange)
 
 
+def rotation_axis_center(X):
+        axis, ang = X.R.rotation_axis()
+
+        # these points lie on a circle who's center is the center of rotation
+        p0 = Vec(0, 0, 0)
+        p1 = Vec(X * p0)
+        p2 = Vec(X * p1)
+        p1 -= axis * (p1 - p0).dot(axis)
+        p2 -= axis * (p2 - p1).dot(axis)
+
+        assert(abs((p1 - p0).dot(axis)) < 0.000001)
+        assert(abs((p2 - p1).dot(axis)) < 0.000001)
+
+        d = p1.length()
+
+        if(d < 0.000001):
+            return axis, ang, Vec(0, 0, 0)
+
+        if abs(2.0 * math.tan(ang / 2.0)) < 0.001:
+            return axis, ang, None
+
+        l = d / (2.0 * math.tan(ang / 2.0))
+
+        tocen = p1.normalized().cross(axis) * l
+        assert(abs(tocen.length() - l) < 0.0001)
+
+        # correct direction based on curvature
+        if(tocen.dot(p2 - p1) < 0.0):
+            tocen = -tocen
+
+        cen = (p0 + p1) / 2.0 + tocen
+        return axis, ang, cen
+
+
 def get_helix_params(res1,res2):
 #    print res1
     stub1 = stub(res1[0],res1[1],res1[2])
     stub2 = stub(res2[0],res2[1],res2[2])
     xform = stub2 * ~stub1
+    #Some error here: 
+    #File "/home/sheffler/venv/david/local/lib/python2.7/site-packages/xyzMath.py", line 892, in rotation_axis_center
+    #assert(abs((p1 - p0).dot(axis)) < 0.000001)
+    print "DEBUG:", stub1, stub2, xform
+
     axis, ang, cen = xform.rotation_axis_center()
     translation_along_axis_of_rotation = axis.dot(xform.t)
     radius_from_CA_1 = projperp(axis, cen - res1[1] ).length()
     return translation_along_axis_of_rotation,radius_from_CA_1,ang
+
+
+
 
 def get_complexes_from_list(c_file):
  p=Pose()
