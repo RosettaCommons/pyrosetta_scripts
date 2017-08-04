@@ -120,7 +120,8 @@ def eval_rama(aa,phi,psi):
     score=sf.eval_rama_score_residue(res_type,phi,psi)
     return score
 
-def calc_repeat_protein_params_ws(input_file):
+def calc_repeat_protein_params_ws(input_file, struct_dir):
+ verbose=0
  p=Pose()
  rep_file=map(string.split,open(input_file,'r').readlines())
  helical_params=[]
@@ -132,7 +133,7 @@ def calc_repeat_protein_params_ws(input_file):
  first=70
  for line in rep_file:
 
-     struct_dir = "/work/baker/repeat_peptide/designs/"
+     # struct_dir = "/work/baker/repeat_peptide/designs/"
      DHR_file=struct_dir+line[0]
      DHR=string.split(line[0],'.')[0]
 
@@ -141,7 +142,7 @@ def calc_repeat_protein_params_ws(input_file):
 
      names.append(DHR)
 
-     print DHR_file,DHR,length
+     if verbose: print DHR_file,DHR,length
      ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
      p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
 
@@ -169,7 +170,7 @@ def calc_repeat_protein_params_ws(input_file):
     # readily available from rosetta (that I am aware of)
      repeat1_onto_2 = rosetta.core.pose.Pose(repeat1)
      rms = rosetta.core.scoring.calpha_superimpose_pose(repeat1_onto_2, repeat2)
-     print 'rms is', rms
+     if verbose: print 'rms is', rms
      res1 = [Vec(repeat1.residue(1).xyz('N')),  Vec(repeat1.residue(1).xyz('CA')), Vec(repeat1.residue(1).xyz('C'))]
      res2 = [Vec(repeat1_onto_2.residue(1).xyz('N')),Vec(repeat1_onto_2.residue(1).xyz('CA')), Vec(repeat1_onto_2.residue(1).xyz('C'))]
      trans, radius, ang = get_helix_params(res1,res2)
@@ -183,7 +184,7 @@ def calc_repeat_protein_params_ws(input_file):
  helical_arcs={}
  for i in range(len(helical_params)):
     arc_length=sqrt( (helical_params[i][0])**2 +( ((helical_params[i][1]) * sin(helical_params[i][2] ))**2 ) )
-#    print('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length))
+    print('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length))
     helical_arcs[names[i]]='%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)
  return helical_params, helical_arcs, names, lengths, pdbs
 
