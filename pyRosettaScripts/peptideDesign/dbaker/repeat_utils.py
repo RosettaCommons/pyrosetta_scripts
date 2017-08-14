@@ -64,15 +64,60 @@ def ran_range(frange):
     return random.uniform(-frange,+frange)
 
 
+def rotation_axis_center(X):
+        axis, ang = X.R.rotation_axis()
+
+        # these points lie on a circle who's center is the center of rotation
+        p0 = Vec(0, 0, 0)
+        p1 = Vec(X * p0)
+        p2 = Vec(X * p1)
+        p1 -= axis * (p1 - p0).dot(axis)
+        p2 -= axis * (p2 - p1).dot(axis)
+
+        assert(abs((p1 - p0).dot(axis)) < 0.000001)
+        assert(abs((p2 - p1).dot(axis)) < 0.000001)
+
+        d = p1.length()
+
+        if(d < 0.000001):
+            return axis, ang, Vec(0, 0, 0)
+
+        if abs(2.0 * math.tan(ang / 2.0)) < 0.001:
+            return axis, ang, None
+
+        l = d / (2.0 * math.tan(ang / 2.0))
+
+        tocen = p1.normalized().cross(axis) * l
+        assert(abs(tocen.length() - l) < 0.0001)
+
+        # correct direction based on curvature
+        if(tocen.dot(p2 - p1) < 0.0):
+            tocen = -tocen
+
+        cen = (p0 + p1) / 2.0 + tocen
+        return axis, ang, cen
+
+
 def get_helix_params(res1,res2):
-#    print res1
+    #print "DEBUG, res1:", res1
+    #print "DEBUG, res2:", res2
     stub1 = stub(res1[0],res1[1],res1[2])
     stub2 = stub(res2[0],res2[1],res2[2])
     xform = stub2 * ~stub1
+    #Some error here: 
+    #File "/home/sheffler/venv/david/local/lib/python2.7/site-packages/xyzMath.py", line 892, in rotation_axis_center
+    #assert(abs((p1 - p0).dot(axis)) < 0.000001)
+    #print "DEBUG: stub1:", stub1
+    #print "DEBUG: stub2:", stub2
+    #print "DEBUG: xform:", xform
+
     axis, ang, cen = xform.rotation_axis_center()
     translation_along_axis_of_rotation = axis.dot(xform.t)
     radius_from_CA_1 = projperp(axis, cen - res1[1] ).length()
     return translation_along_axis_of_rotation,radius_from_CA_1,ang
+
+
+
 
 def get_complexes_from_list(c_file):
  p=Pose()
@@ -114,6 +159,7 @@ def eval_clashes_and_contacts(complexes,ala_convert):
          contacts = repeat_rose.contacts(pept_rose)
          print(name,clashes,contacts)
 
+#Deprecated, this function is too slow because it generates a efxn every time
 def eval_rama(aa,phi,psi):
     sf = rosetta.core.scoring.Ramachandran()
     res_type = rosetta.core.chemical.aa_from_name(aa)
@@ -183,6 +229,81 @@ def calc_repeat_protein_params_ws(input_file, struct_dir, offset):
 
     #  p.dump_pdb('%s_tf.pdb'%DHR)
      pdbs[DHR]=p.clone()
+
+ print('name repeat_length trans radius angle arc_length')
+ helical_arcs={}
+ for i in range(len(helical_params)):
+    arc_length=sqrt( (helical_params[i][0])**2 +( ((helical_params[i][1]) * sin(helical_params[i][2] ))**2 ) )
+    print('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length))
+    helical_arcs[names[i]]='%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)
+ return helical_params, helical_arcs, names, lengths, pdbs
+
+
+def calc_repeat_protein_params_ws_simple(input_file):
+ verbose=0   
+ p=Pose()
+ #contains a list of pairs that specify the input PDB file and the size of a single repeat
+ rep_file=map(string.split,open(input_file,'r').readlines())
+
+ #Here we create the helical parameters and identify its helical parameters, 
+ #I suspect the helical parameter function is incomplete and will fail to capture
+ #many cases that fit the geometry too
+ helical_params=[]
+ helical_params2=[]
+ helical_params3=[]
+ names=[]
+ lengths=[]
+ pdbs={}
+ first=70  #What is this 70???
+ for line in rep_file:
+     #Remove the .pdb from the input name, I don't think that is necessary, 
+     #but OK... many cases will not comply with this.
+     DHR_file=line[0]
+     
+     length=int(line[1])
+     lengths.append(length)
+
+     names.append(DHR_file)
+
+     if verbose: print DHR_file,length
+     ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
+     p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
+
+     repeat1_start = first
+     repeat1_stop = first+length-1
+     repeat2_start = first+length
+     repeat2_stop = first +length*2 -1
+
+     repeat1_sel = rosetta.utility.vector1_unsigned_long()
+     repeat2_sel = rosetta.utility.vector1_unsigned_long()
+     for i in range(repeat1_start, repeat1_stop + 1):
+        repeat1_sel.append(i)
+     for i in range(repeat2_start, repeat2_stop + 1):
+        repeat2_sel.append(i)
+
+     ft = rosetta.core.kinematics.FoldTree(repeat1_stop - repeat1_start + 1)
+     repeat1 = rosetta.core.pose.Pose()
+     rosetta.core.pose.create_subpose(p, repeat1_sel, ft, repeat1)
+     repeat2 = rosetta.core.pose.Pose()
+     rosetta.core.pose.create_subpose(p, repeat2_sel, ft, repeat2)
+
+    # repeat1 and repeat2 are poses with adjacent repeat
+    # segments, with identical length
+    # now create an exact copy of repeat1, then superimpose it onto repeat2
+    # this is basically a way to get the superposition xform, which is not
+    # readily available from rosetta (that I am aware of)
+
+     repeat1_onto_2 = rosetta.core.pose.Pose(repeat1)
+     rms = rosetta.core.scoring.calpha_superimpose_pose(repeat1_onto_2, repeat2)
+     if verbose: print 'rms is', rms
+     res1 = [Vec(repeat1.residue(1).xyz('N')),  Vec(repeat1.residue(1).xyz('CA')), Vec(repeat1.residue(1).xyz('C'))]
+     res2 = [Vec(repeat1_onto_2.residue(1).xyz('N')),Vec(repeat1_onto_2.residue(1).xyz('CA')), Vec(repeat1_onto_2.residue(1).xyz('C'))]
+     trans, radius, ang = get_helix_params(res1,res2)
+     helical_params.append( (trans, radius, ang) )
+     p=center_on_z_axis(res1,res2,p.clone())
+
+    #  p.dump_pdb('%s_tf.pdb'%DHR)
+     pdbs[DHR_file]=p.clone()
 
  print('name repeat_length trans radius angle arc_length')
  helical_arcs={}

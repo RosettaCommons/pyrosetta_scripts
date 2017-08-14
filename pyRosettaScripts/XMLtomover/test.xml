@@ -1,0 +1,20 @@
+<ROSETTASCRIPTS>
+    <SCOREFXNS>
+	<ScoreFunction name="beta" weights="beta_nov16"/>
+    </SCOREFXNS>
+    <RESIDUE_SELECTORS>
+    </RESIDUE_SELECTORS>
+    <TASKOPERATIONS>
+    </TASKOPERATIONS>
+    <FILTERS>
+    </FILTERS>
+    <MOVERS>
+	<FastRelax name="FR" scorefxn="beta" repeats="%%repeats%%" />
+    </MOVERS>
+    <APPLY_TO_POSE>
+    </APPLY_TO_POSE>
+    <PROTOCOLS>
+	<Add mover_name="FR"/>
+    </PROTOCOLS>
+    <OUTPUT />
+</ROSETTASCRIPTS>

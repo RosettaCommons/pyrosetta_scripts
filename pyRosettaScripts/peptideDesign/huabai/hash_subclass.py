@@ -24,14 +24,15 @@ class bb_hash:
         self.binner= RayRay10dHash(resl, lever)
 
     def get_frame_from_res(self,res):
-        prot_bb=V3(res.xyz('N')),V3(res.xyz('CA')),V3(res.xyz('C')) 
+        prot_bb=V3(res.xyz('N')),V3(res.xyz('CA')),V3(res.xyz('C'))
         frame = rosetta.core.kinematics.Stub(prot_bb[0],prot_bb[1],prot_bb[2])
         return frame
-    
+
     def get_bb_rays_from_res(self,res):
         bb_rays= V3(res.xyz('C')),V3(res.xyz('O')),V3(res.xyz('N')),V3(res.xyz('H'))
+        # bb_rays= V3(res.xyz('C')),V3(res.xyz('O')),V3(res.xyz('CA')),V3(res.xyz('N'))
         return bb_rays
-    
+
     def get_bin_from_rot_and_bb(self,bb_rays,rot):
         frame=get_frame_from_res(rot)
         Catom=frame.global2local(bb_rays[0])
@@ -40,20 +41,20 @@ class bb_hash:
         Hatom=frame.global2local(bb_rays[3])
         COray = Ray(orig=Oatom, dirn=(Oatom-Catom))
         NHray = Ray(orig=Hatom, dirn=(Hatom-Natom))
-        k=self.binner.get_key(COray,NHray) 
+        k=self.binner.get_key(COray,NHray)
         return k
 
     def get_bin_from_rot_and_frame(self,bb_rays,frame):    #use this one when have many chain 2 residues for each chain 1 residue; can precompute frame from chain 1 res
-        
+
         Catom=frame.global2local(bb_rays[0])
         Oatom=frame.global2local(bb_rays[1])
         Natom=frame.global2local(bb_rays[2])
         Hatom=frame.global2local(bb_rays[3])
         COray = Ray(orig=Oatom, dirn=(Oatom-Catom))
         NHray = Ray(orig=Hatom, dirn=(Hatom-Natom))
-        k=self.binner.get_key(COray,NHray) 
+        k=self.binner.get_key(COray,NHray)
         return k
-        
+
 class make_hash(bb_hash):
     def __init__(self,resl,lever):
         bb_hash.__init__(self,resl,lever)
@@ -64,7 +65,7 @@ class make_hash(bb_hash):
         v.append( ('ND2', 'ND2') )
         v.append( ('CG', 'CG') )
         self.v=v
-        
+
     def orient_rots(base):
         for rot in self.rots:
             rot.orient_onto_residue(base,self.v)
@@ -73,7 +74,7 @@ class make_hash_no_rot(make_hash):
     def __init(self,resl,lever):
         make_hash.__init__(self,resl,lever)
         self.s=set()
-        
+
     def update_table(self,gn):
         orient_rots(gn.residue(4))  # rots is transformed
         bb=gn.residue(2)
@@ -89,7 +90,7 @@ class make_hash_store_rot(make_hash):
     def __init__(self,resl,lever):
         make_hash.__init__(self,resl,lever)
         self.dd=collections.defaultdict(set)
-        
+
     def update_table_chi(self,gn,rots):
         orient_rots(gn.residue(4))  # rots is transformed
         bb=gn.residue(2)
@@ -107,7 +108,7 @@ class make_hash_store_and_count_rot(make_hash):
     def __init__(self,resl,lever):
         make_hash.__init__(self,resl,lever)
         self.dd=defaultdict(lambda : defaultdict(int))
-        
+
     def update_table_chi(self,gn,rots):
         orient_rots(gn.residue(4))  # rots is transformed
         bb=gn.residue(2)
@@ -138,11 +139,12 @@ class use_hash(bb_hash):
 
     def replace_residues(self,pose):
          mr = protocols.simple_moves.MutateResidue()
-         mr.set_res_name('ASN')
+         # mr.set_res_name('ASN')
+         mr.set_res_name('TYR')
          for res in self.res_list:
              mr.set_target(res)
              mr.apply(pose)
-             
+
     def count_asn_bb(self,pept,prot):
         mr = protocols.simple_moves.MutateResidue()
         nhb=0
@@ -159,7 +161,7 @@ class use_hash(bb_hash):
                   print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
                   self.res_list.append(prot_res.seqpos())
         if nhb>0: self.replace_residues(prot)
-        
+
 #                  mr.set_target(resn)
 #                  mr.set_res_name('ASN')
 #                  mr.apply(prot)
@@ -173,20 +175,20 @@ class use_hash_rot(bb_hash):
         tt=self.dd.keys()
         for key in tt[:5]:
             print key, self.dd[key]
-            
+
     def convert_to_set(self):
         key_set=set(self.dd.keys())
         return key_set
-            
+
     def replace_residues_and_chis(self,prot):
          mr = protocols.simple_moves.MutateResidue()
-         mr.set_res_name('ASN')
+         mr.set_res_name('TYR')
          for res_info in self.res_list:
              mr.set_target(res_info[0])
              mr.apply(prot)
              prot.set_chi(1,res_info[0],res_info[1])
              prot.set_chi(2,res_info[0],res_info[2])
-             
+
     def count_asn_bb(self,pept,prot):
         nhb=0
         prot_residues=[prot.residue(i) for i in range(2,prot.size())] #skip termini as atom types differ
@@ -200,10 +202,10 @@ class use_hash_rot(bb_hash):
                 if k in self.dd.keys():
                   nhb=nhb+1
                   chis=next(iter(self.dd[k]))   # for now, use random rot
-                  self.res_list.append( (prot_res.seqpos(),10*chis[0],10*chis[1]) )  
+                  self.res_list.append( (prot_res.seqpos(),10*chis[0],10*chis[1]) )
                   print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
         if nhb>0: self.replace_residues_and_chis(prot)
-        
+
         return nhb
 
     def get_all_rots(self,pept,prot):
@@ -221,7 +223,7 @@ class use_hash_rot(bb_hash):
                   nhb=nhb+1
                   rots[prot_res.seqpos()]=self.dd[k]
                   print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
-        
+
         return nhb,rots
 
     def test_hash(self,pdb):
@@ -237,7 +239,7 @@ class use_hash_rot(bb_hash):
         else:
             return 0
 
-            
+
 import string
 if __name__ == "__main__":
     pyrosetta.init()
@@ -256,6 +258,6 @@ if __name__ == "__main__":
         pept,prot=p.split_by_chain()
         nhb=hash_nc.count_asn_bb(pept,prot)
         print nhb,pdb
-        
+
     #    prot.dump_pdb('%s.pdb'%nhb)
-    
+
