@@ -243,11 +243,11 @@ class use_hash_rot(bb_hash):
 import string
 if __name__ == "__main__":
     pyrosetta.init()
-    prot=rosetta.core.import_pose.pose_from_file("5AEI_A.pdb")
-    pept=rosetta.core.import_pose.pose_from_file("5AEI_D.pdb")
+    prot=rosetta.core.import_pose.pose_from_file(".pdb")
+    pept=rosetta.core.import_pose.pose_from_file(".pdb")
 #    hash_chi=use_hash_rot(1.0,3.0,"bb_asn_hash_combo_new_ray_1.0_rot0")
 #    hash_nc=use_hash(1.0,3.0,"bb_asn_hash_combo_new_ray_1.0_rot0")
-    hash_nc=use_hash_rot(1.0,3.0,"bb_asn_dict_combo_1.0_rot0")
+    hash_nc=use_hash_rot(1.0,3.0,"PP2_hashtable")
     nhb=hash_nc.count_asn_bb(pept,prot)
 #    s=hash_nc.convert_to_set()
 #    pickle.dump(s,open("bb_asn_dict_combo_1.0_set","wb"))
