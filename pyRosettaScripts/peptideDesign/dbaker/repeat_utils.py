@@ -120,7 +120,9 @@ def eval_rama(aa,phi,psi):
     score=sf.eval_rama_score_residue(res_type,phi,psi)
     return score
 
-def calc_repeat_protein_params_ws(input_file, struct_dir):
+# have to wait for python 3 for this
+#def calc_repeat_protein_params_ws(input_file, struct_dir, *, offset=0):
+def calc_repeat_protein_params_ws(input_file, struct_dir, offset):   
  verbose=0
  p=Pose()
  rep_file=map(string.split,open(input_file,'r').readlines())
@@ -130,7 +132,7 @@ def calc_repeat_protein_params_ws(input_file, struct_dir):
  names=[]
  lengths=[]
  pdbs={}
- first=70
+
  for line in rep_file:
 
      # struct_dir = "/work/baker/repeat_peptide/designs/"
@@ -146,10 +148,12 @@ def calc_repeat_protein_params_ws(input_file, struct_dir):
      ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
      p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
 
-     repeat1_start = first
-     repeat1_stop = first+length-1
-     repeat2_start = first+length
-     repeat2_stop = first +length*2 -1
+     #for helix param calculation, go from middle of 2nd repeat to middle of 3rd repeat
+     half_repeat=int(length/2)
+     repeat1_start = length+half_repeat + offset
+     repeat1_stop = repeat1_start + length-1
+     repeat2_start = 2*length+half_repeat + offset
+     repeat2_stop = repeat2_start+length-1
 
      repeat1_sel = rosetta.utility.vector1_unsigned_long()
      repeat2_sel = rosetta.utility.vector1_unsigned_long()
