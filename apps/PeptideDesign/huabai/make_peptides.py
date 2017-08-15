@@ -46,7 +46,7 @@ def get_argparse():
                    default='1',
                    help='use bidentate hbond hash (or other geometric property) to filter docks ')
     parser.add_argument('--hash_file_name', dest='hash_file',
-                   default='bb_asn_dict_combo_1.0_rot0',
+                   default='PP2_hashtable',
                    help='name of hash file (required if --use_hash is specified if different from default) ')
     parser.add_argument('--repeat_match_trans', type= float, dest='trans_threshold',
                    default='1.5',
@@ -89,7 +89,7 @@ def generate_peptides(repeat_L,N_repeats,Nsamples,phi_range,psi_range,dump_pdb):
   for i in range(Nsamples):
     torsions=[]
     for j in range(repeat_L):
-        phi,psi=  choose_torsions(phi_range,psi_range,'THR')
+        phi,psi=  choose_torsions(phi_range,psi_range,'PRO')
         torsions.append( (phi,psi) )
 
 

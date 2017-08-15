@@ -163,8 +163,8 @@ print 'set up  peptide backbone generator '
 pept_gen = generate_peptides(args.repeat_length,args.Nrepeats,args.npept,args.phi_range,args.psi_range,0)  #repeat_length, Nstruct, angle variance, output_pdb
 
 print 'get repeat protein params '
-DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file,args.struct_dir)
-
+DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file,args.struct_dir,offset=0)
+#DHR_params, DHR_arcs, names, lengths, rep_structs = calc_repeat_protein_params_ws(args.input_file,args.struct_dir,offset=10)
 print 'generate peptides and compare helical params to those of repeat proteins'
 Nmatch, matches=compare_params(pept_gen,DHR_params,names,args.trans_threshold,args.rot_threshold)
 print('Number of matches: %s '%Nmatch)
