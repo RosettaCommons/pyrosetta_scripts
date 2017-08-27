@@ -25,7 +25,7 @@ def test_app_function():
     assert example.app_function('A') == '__qAw__'
 
 
-def test_app_function2():
-    ''' This test will always fail
-    '''
-    assert False
+# def test_app_function2():
+#     ''' This test will always fail
+#     '''
+#     assert False
