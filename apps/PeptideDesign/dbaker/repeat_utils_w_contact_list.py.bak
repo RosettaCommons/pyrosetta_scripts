@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from pdb_utils_noclass import *
 from pyrosetta.toolbox import pose_from_rcsb
 import random,string
@@ -8,6 +7,42 @@ from rosetta.protocols.sic_dock import Rose
 from rosetta.core.id import AtomID
 from rosetta.core.pose import xyzStripeHashPose, PoseCoordPickMode_BB, PoseCoordPickMode_CB
 from rosetta.numeric import xyzVector_float_t
+from rif import stripe_index_3d, rcl
+from rosetta.numeric import xyzVector_float_t
+from rosetta.core.kinematics import Stub
+
+
+class PoseResnumIndex(object):
+    def __init__(self, pose, clash_dis=3.2, nbr_dis=7.0, nbr_atom='CA'):
+        bb_atoms = rcl.atoms(pose, 'bbheavy')
+        self.clash_check = stripe_index_3d(clash_dis, bb_atoms)
+        cens, resnums = list(), list()
+        for res in pose:
+            if res.is_protein():
+                cens.append(res.xyz('CA'))
+                resnums.append(res.seqpos())
+        self.resi_map = stripe_index_3d(nbr_dis, cens, resnums)
+        self.nbr_atom = nbr_atom
+
+    def clashes(self, pose):
+        for res in pose:
+            for ia in range(1, res.nheavyatoms() + 1):
+                xyz = res.xyz(ia)
+                if self.clash_check.neighbor_exists(xyz):
+                    return True
+        return False
+
+    def contacting_resnums(self, pose):
+        if self.clashes(pose):
+            return None  # could alternately return empty set
+        contacts = set()
+        for res in pose:
+            if res.has(self.nbr_atom):
+                xyz = res.xyz(self.nbr_atom)
+                nbrs = self.resi_map.neighbors(xyz)
+                contacts.update(nbrs)
+        return contacts
+
 
 class ClashAndContact(object):
     def __init__(self, pose):
@@ -29,11 +64,12 @@ class ClashAndContact(object):
 def eval_contacts_pair(rep_pose,dock_gen,contact_cutoff):
    good_matches=[]
    contact_hist={}
-   checker=ClashAndContact(rep_pose)
+   checker=PoseResnumIndex(rep_pose)
    ntries=0
    for pept_pose, deg, dist in dock_gen:
          ntries += 1
-         contacts = checker.contact_score(pept_pose)
+         contact_set = checker.contacting_resnums(pept_pose)
+         contacts=len(contact_set)
          if contacts in contact_hist.keys():
              contact_hist[contacts]=contact_hist[contacts]+1
          else:
@@ -41,7 +77,7 @@ def eval_contacts_pair(rep_pose,dock_gen,contact_cutoff):
 #         print contacts
 #         print complex[1][0:5], contacts
          if contacts > contact_cutoff:
-             good_matches.append( (pept_pose,deg, dist  ,contacts) )
+             good_matches.append( (pept_pose,deg, dist  ,contacts, contact_set) )
    return good_matches, contact_hist, ntries
 
 def eval_contacts(complexes):
@@ -123,6 +159,7 @@ def get_helix_params(res1,res2):
 
 
 
+new
 
 def get_complexes_from_list(c_file):
  p=Pose()
