@@ -1,0 +1,101 @@
+--- repeat_utils_w_contact_list.py	(original)
++++ repeat_utils_w_contact_list.py	(refactored)
+@@ -70,7 +70,7 @@
+          ntries += 1
+          contact_set = checker.contacting_resnums(pept_pose)
+          contacts=len(contact_set)
+-         if contacts in contact_hist.keys():
++         if contacts in list(contact_hist.keys()):
+              contact_hist[contacts]=contact_hist[contacts]+1
+          else:
+              contact_hist[contacts]=1
+@@ -94,7 +94,7 @@
+          pept_pose=complex[0][1]
+ 
+          contacts = checker.contact_score(pept_pose)
+-         print complex[1][0:5], contacts
++         print(complex[1][0:5], contacts)
+ 
+ def ran_range(frange):
+     return random.uniform(-frange,+frange)
+@@ -163,7 +163,7 @@
+ 
+ def get_complexes_from_list(c_file):
+  p=Pose()
+- complex_file= map(string.split,open(c_file,'r').readlines())
++ complex_file= list(map(string.split,open(c_file,'r').readlines()))
+  complexes=[]
+  for line in complex_file:
+      pdb=line[0]
+@@ -199,7 +199,7 @@
+          clashes = repeat_rose.clashes(pept_rose)
+        #  contacts.append(repeat_rose.contacts(pept_rose))
+          contacts = repeat_rose.contacts(pept_rose)
+-         print(name,clashes,contacts)
++         print((name,clashes,contacts))
+ 
+ #Deprecated, this function is too slow because it generates a efxn every time
+ def eval_rama(aa,phi,psi):
+@@ -213,7 +213,7 @@
+ def calc_repeat_protein_params_ws(input_file, struct_dir, offset):   
+  verbose=1
+  p=Pose()
+- rep_file=map(string.split,open(input_file,'r').readlines())
++ rep_file=list(map(string.split,open(input_file,'r').readlines()))
+  helical_params=[]
+  helical_params2=[]
+  helical_params3=[]
+@@ -232,7 +232,7 @@
+ 
+      names.append(DHR)
+ 
+-     if verbose: print DHR_file,DHR,length
++     if verbose: print(DHR_file,DHR,length)
+      ## p=rosetta.core.import_pose.pose_from_file(DHR_file)
+      p=convert_to_ala(rosetta.core.import_pose.pose_from_file(DHR_file))
+ 
+@@ -255,7 +255,7 @@
+      rosetta.core.pose.create_subpose(p, repeat1_sel, ft, repeat1)
+      repeat2 = rosetta.core.pose.Pose()
+      rosetta.core.pose.create_subpose(p, repeat2_sel, ft, repeat2)
+-     if verbose: print p.size(),repeat1.size(),repeat2.size()
++     if verbose: print(p.size(),repeat1.size(),repeat2.size())
+      # repeat1 and repeat2 are poses with adjacent repeat
+     # segments, with identical length
+     # now create an exact copy of repeat1, then superimpose it onto repeat2
+@@ -263,7 +263,7 @@
+     # readily available from rosetta (that I am aware of)
+      repeat1_onto_2 = rosetta.core.pose.Pose(repeat1)
+      rms = rosetta.core.scoring.calpha_superimpose_pose(repeat1_onto_2, repeat2)
+-     if verbose: print 'rms is', rms
++     if verbose: print('rms is', rms)
+      res1 = [Vec(repeat1.residue(1).xyz('N')),  Vec(repeat1.residue(1).xyz('CA')), Vec(repeat1.residue(1).xyz('C'))]
+      res2 = [Vec(repeat1_onto_2.residue(1).xyz('N')),Vec(repeat1_onto_2.residue(1).xyz('CA')), Vec(repeat1_onto_2.residue(1).xyz('C'))]
+      trans, radius, ang = get_helix_params(res1,res2)
+@@ -277,7 +277,7 @@
+  helical_arcs={}
+  for i in range(len(helical_params)):
+     arc_length=sqrt( (helical_params[i][0])**2 +( ((helical_params[i][1]) * sin(helical_params[i][2] ))**2 ) )
+-    print('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length))
++    print(('%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)))
+     helical_arcs[names[i]]='%s %s   %.2f %.2f %.2f  %.2f'%(names[i],lengths[i],helical_params[i][0],helical_params[i][1],helical_params[i][2],arc_length)
+  return helical_params, helical_arcs, names, lengths, pdbs
+ 
+@@ -285,7 +285,7 @@
+ 
+ def calc_repeat_protein_params():
+  p=Pose()
+- rep_file=map(string.split,open('repeat.list','r').readlines())
++ rep_file=list(map(string.split,open('repeat.list','r').readlines()))
+  helical_params=[]
+  helical_params2=[]
+  helical_params3=[]
+@@ -412,7 +412,7 @@
+     get_helix_params(res1,res2)
+ 
+     p=rosetta.core.import_pose.pose_from_file("5AEI_A.pdb")
+-    print(p.residue(106).name(),p.residue(107).name(),p.residue(149).name(),p.residue(191).name())
++    print((p.residue(106).name(),p.residue(107).name(),p.residue(149).name(),p.residue(191).name()))
+     res1=[Vec(p.residue(107).xyz("N")),Vec(p.residue(107).xyz("CA")),Vec(p.residue(107).xyz("C"))]
+     res2=[Vec(p.residue(149).xyz("N")),Vec(p.residue(149).xyz("CA")),Vec(p.residue(149).xyz("C"))]
+     res3=[Vec(p.residue(191).xyz("N")),Vec(p.residue(191).xyz("CA")),Vec(p.residue(191).xyz("C"))]

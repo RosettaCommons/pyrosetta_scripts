@@ -83,7 +83,7 @@ class make_hash_no_rot(make_hash):
             self.s.add(k)
             self.n_added+=1
             if self.n_added % 1000==0:
-                print(('added %s hash size %s'%(self.n_added,len(s))))
+                print('added %s hash size %s'%(self.n_added,len(s)))
 
 class make_hash_store_rot(make_hash):
     def __init__(self,resl,lever):
@@ -101,7 +101,7 @@ class make_hash_store_rot(make_hash):
             self.dd[k].add( (chi1,chi2) )
             self.n_added+=1
             if self.n_added % 1000==0:
-              print(('added %s hash size %s'%(n_added,len(list(dd.keys())))))
+              print('added %s hash size %s'%(n_added,len(dd.keys())))
 
 class make_hash_store_and_count_rot(make_hash):
     def __init__(self,resl,lever):
@@ -119,15 +119,15 @@ class make_hash_store_and_count_rot(make_hash):
             self.dd[k][(chi1,chi2)] += 1
             self.n_added+=1
             if self.n_added % 1000==0:
-              print(('added %s hash size %s'%(n_added,len(list(dd.keys())))))
+              print('added %s hash size %s'%(n_added,len(dd.keys())))
 
     def find_most_frequent_rot(self):
         d1={}
-        for bin in list(dd.keys()):
+        for bin in dd.keys():
             v=list(dd[bin].values())
             k=list(dd[bin].keys())
             common_rot= k[v.index(max(v))]
-            print(bin,k,v,common_rot)
+            print bin,k,v,common_rot
         d1[bin]=common_rot
         return d1
 
@@ -156,7 +156,7 @@ class use_hash(bb_hash):
                 k=self.get_bin_from_rot_and_frame(bb_rays,frame)
                 if k in self.s:
                   nhb=nhb+1
-                  print(prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1())
+                  print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
                   self.res_list.append(prot_res.seqpos())
         if nhb>0: self.replace_residues(prot)
         
@@ -170,9 +170,9 @@ class use_hash_rot(bb_hash):
     def __init__(self,resl,lever,filename):
         bb_hash.__init__(self,resl,lever)
         self.dd =pickle.load(open(filename,"rb"))
-        tt=list(self.dd.keys())
+        tt=self.dd.keys()
         for key in tt[:5]:
-            print(key, self.dd[key])
+            print key, self.dd[key]
             
     def convert_to_set(self):
         key_set=set(self.dd.keys())
@@ -198,11 +198,11 @@ class use_hash_rot(bb_hash):
              for pept_residue in pept_residues:
                 bb_rays=self.get_bb_rays_from_res(pept_residue)
                 k=self.get_bin_from_rot_and_frame(bb_rays,frame)
-                if k in list(self.dd.keys()):
+                if k in self.dd.keys():
                   nhb=nhb+1
                   chis=next(iter(self.dd[k]))   # for now, use random rot
                   self.res_list.append( (prot_res.seqpos(),10*chis[0],10*chis[1]) )  
-                  print(prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1())
+                  print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
         if nhb>0: self.replace_residues_and_chis(prot)
         
         return nhb             
@@ -216,11 +216,11 @@ class use_hash_rot(bb_hash):
              for pept_residue in pept_residues:
                 bb_rays=self.get_bb_rays_from_res(pept_residue)
                 k=self.get_bin_from_rot_and_frame(bb_rays,frame)
-                if k in list(self.dd.keys()):
+                if k in self.dd.keys():
                   nhb=nhb+1
                   chis=next(iter(self.dd[k]))   # for now, use random rot
                   self.res_list.append( (prot_res.seqpos(),10*chis[0],10*chis[1]) )  
-                  print(prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1())
+                  print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
         if nhb>0: self.replace_residues_and_chis(prot)
         
         return nhb
@@ -249,10 +249,10 @@ class use_hash_rot(bb_hash):
              for pept_residue in pept_residues:
                 bb_rays=self.get_bb_rays_from_res(pept_residue)
                 k=self.get_bin_from_rot_and_frame(bb_rays,frame)
-                if k in list(self.dd.keys()):
+                if k in self.dd.keys():
                   nhb=nhb+1
                   rots[prot_res.seqpos()]=self.dd[k]
-                  print(prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1())
+                  print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
         
         return nhb,rots
 
@@ -263,8 +263,8 @@ class use_hash_rot(bb_hash):
         frame = self.get_frame_from_res(asn_res)
         bb_rays=self.get_bb_rays_from_res(pept_residue)
         k=self.get_bin_from_rot_and_frame(bb_rays,frame)
-        if k in list(self.dd.keys()):
-            print(dd[k])
+        if k in self.dd.keys():
+            print dd[k]
             return 1
         else:
             return 0
