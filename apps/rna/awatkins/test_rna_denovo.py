@@ -17,11 +17,10 @@ from __future__ import print_function
 import rna_denovo
 
 import pytest
-
+from pyrosetta import *
+from pyrosetta.rosetta import *
 
 def test_app_function():
-    from pyrosetta import *
-    from pyrosetta.rosetta import *
     init("-constant_seed -rna:denovo:cycles 5")
     rna_denovo.denovo(["gcaa_tetraloop_HELIX1.pdb"], "gcaa_tetraloop_NATIVE_1zih_RNA.pdb", "gcaa_tetraloop_NATIVE_1zih_RNA.pdb", "gcaa_tetraloop.fasta", 1, "test_denovo.out")
 
