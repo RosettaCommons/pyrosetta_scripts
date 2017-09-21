@@ -10,7 +10,7 @@
 
 ## @file   test_stepwise.py
 ## @brief  test file stepwise.py app
-## @author Andy Watkins 
+## @author Andy Watkins
 
 from __future__ import print_function
 
@@ -20,12 +20,16 @@ import pytest
 from pyrosetta import *
 from pyrosetta.rosetta import *
 
+import os
+
 def test_app_function():
     init("-constant_seed -stepwise:monte_carlo:cycles 5")
-    stepwise.stepwise(["gcaa_tetraloop_HELIX1.pdb"], "gcaa_tetraloop_NATIVE_1zih_RNA.pdb", "gcaa_tetraloop_NATIVE_1zih_RNA.pdb", "gcaa_tetraloop.fasta", 1, "test_stepwise.out")
 
+    r = os.path.dirname(os.path.abspath(__file__)) + '/'
 
-# def test_app_function2():
-#     ''' This test will always fail
-#     '''
-#     assert False
+    stepwise.stepwise([r+"gcaa_tetraloop_HELIX1.pdb"],
+                      r+"gcaa_tetraloop_NATIVE_1zih_RNA.pdb",
+                      r+"gcaa_tetraloop_NATIVE_1zih_RNA.pdb",
+                      r+"gcaa_tetraloop.fasta",
+                      1,
+                      r+"test_stepwise.out")
