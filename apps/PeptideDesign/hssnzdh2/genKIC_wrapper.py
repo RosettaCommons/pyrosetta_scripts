@@ -1,3 +1,7 @@
+#Authors: Parisa Hosseinzadeh
+#Date: 17/10/2017
+#Description: Expands and runs genKIC on chain A to generate macrocycles with a user defiend length
+
 from __future__ import print_function
 
 import argparse
