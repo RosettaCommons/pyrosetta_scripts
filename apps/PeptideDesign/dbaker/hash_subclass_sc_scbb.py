@@ -20,7 +20,8 @@ from collections import namedtuple
 
 #  use_hash is used in identifying hits in provided poses
 
-
+name_data_type=namedtuple('name_data_type',['sc_resName','scbb_resName'])
+store_data_type = namedtuple('store_data_type', ['res_names','sc_res_chis','scbb_res_chis']) 
 
 def generate_canonical_rotamer_residues( residue_name , target_phi_psi):
     canonical_phi_psi = {"helical" : (-66.0,-42.0), "sheet" : (-126.0,124.0)}
@@ -45,6 +46,11 @@ def generate_canonical_rotamer_residues( residue_name , target_phi_psi):
     rotamers = [rotamer_set.rotamer(i).clone() for i in range(1, rotamer_set.num_rotamers() + 1)]
     return rotamers
 
+def get_rots(sc_res,inverse_rot_backbones):
+    rots=[]
+    for angles in inverse_rot_backbones:
+        rots = rots + generate_canonical_rotamer_residues(sc_res.name3(),angles)
+    return rots
 
 # hash is from sc of sc_res to sc and bb of scbb_res.   key depends only on transform and possibly phi and psi of scbb_res.    Hence only require frame for res1, but pose for res2
 # info stored may be res_names, chis of both residues, and relevant phipsi of scbb_res 
@@ -52,10 +58,11 @@ class bb_hash_sc_scbb:
     def __init__(self,hash_function,scbb_torsions):
         self.hash_function= hash_function
         self.scbb_torsions = scbb_torsions
-#        self.store_res_names = store_res_names
+        print(self.hash_function.grid)
+        #        self.store_res_names = store_res_names
 #        self.name_data=name_data
 
-    def get_bin_from_frame_and_pose(self, frame, pose, resN):
+    def get_bin_from_frame_and_pose(self, frame, pose, resN, verbose=0):
         scbb_res=pose.residue(resN)
         Aatom=frame.global2local(scbb_res.xyz('N'))
         Batom=frame.global2local(scbb_res.xyz('CA'))
@@ -64,8 +71,12 @@ class bb_hash_sc_scbb:
         tors=[]
 # the following should work generally for the 0, 1 and 2 torsion dependency cases
         for x in self.scbb_torsions:
-            if x in ['phi','psi']: tors.append( getattr(pose(resN),x))   # don't hash on chi1 as won't know it when scanning pose for hits
-        k=self.hash_function(bb_stub,*tors)  # need to spell out items in list
+            if x=='phi': tors.append(( (180.+pose.phi(resN)) %360. )-180.)
+            if x=='psi': tors.append(( (180.+pose.psi(resN)) %360. )-180.)
+#            if x in ['phi','psi']: tors.append( getattr(pose(resN),x))   # don't hash on chi1 as won't know it when scanning pose for hits
+#        print('hash_key',bb_stub,*tors)
+        k=self.hash_function.get_key(bb_stub,*tors)  # need to spell out items in list
+        if verbose: print('key_info: ',bb_stub,*tors)
         return k
             
     def get_frame_from_res(self,res):
@@ -76,10 +87,13 @@ class bb_hash_sc_scbb:
 # we are hashing sc to scbb interactions (mainly hbonds).  will keep sc_res fixed, and sample rigid body orientation and relevant backbone torsions of scbb_res.
 # so just have to orient rotamers once onto sc res, and then keep them fixed. 
 class make_hash_sc_scbb(bb_hash_sc_scbb):
-    def __init__(self,hash_function, scbb_torsions, orient_atoms, inverse_rot_backbones, sc_res, store_res_names_in_hash,name_data=[] ):
+    def __init__(self,hash_function, scbb_torsions, orient_atoms, inverse_rot_backbones, sc_res, store_res_names_in_hash,name_data=(None,None)):
         bb_hash_sc_scbb.__init__(self,hash_function,scbb_torsions)
-        if store_res_names_in hash:
+        if store_res_names_in_hash:
+            self.store_res_names_in_hash=1
             self.name_data=name_data
+        else:
+            self.store_res_names_in_hash=0
         self.n_added=0
         v=pyrosetta.rosetta.utility.vector1_std_pair_std_string_std_string_t()
         for atom in orient_atoms:
@@ -88,15 +102,16 @@ class make_hash_sc_scbb(bb_hash_sc_scbb):
         self.dd=defaultdict(set)
             
  # generate and store all inverse rotamers of sc_res, their frames, and their chis            
-        rots=get_rots(inverse_rot_backbones) 
+        rots=get_rots(sc_res,inverse_rot_backbones) 
+        print('# of inverse rotamers used in hashing',len(rots))
         frames=[]
         chis=[]
         rot_info=[]
         for rot in rots:
-            rot.orient_onto_residue(sc_res,self.v)
+            rot.orient_onto_residue(sc_res,v)
             frame=self.get_frame_from_res(rot)
             chi_list=[]
-            for i in rot.nchi()+1:
+            for i in range(rot.nchi()+1):
                 chi_list.append(int(rot.chi(i))/10)
             chi_tuple=tuple(chi_list)
             rot_data={"rot" : rot, "frame" : frame,"chis" : chi_tuple}
@@ -104,22 +119,26 @@ class make_hash_sc_scbb(bb_hash_sc_scbb):
         self.rot_list=rot_info
 
 
-    def get_rots(inverse_rot_backbones):
+    def get_rots(sc_res,inverse_rot_backbones):
          rots=[]
          for angles in inverse_rot_backbones:
-            rots = rots + generate_canonical_rotamer_residues(self.sc_res.name3(),angles)
+            rots = rots + generate_canonical_rotamer_residues(sc_res.name3(),angles)
          return rots
         
     def update_hash(self,pose,scbb_resN):
-        store_data = namedtuple('store_data', ['res_names','sc_res_chis','scbb_res_chis']) # don't need to store scbb_tors as these are specified in key
+    #    store_data = namedtuple('store_data', ['res_names','sc_res_chis','scbb_res_chis']) # don't need to store scbb_tors as these are specified in key
         for rot_info in self.rot_list: 
-            k=self.get_bin_from_frame_and_pose_bb(rot_info["frame"],pose,scbb_resN)
-            if self.store_res_names : store_data.res_names=self.name_data
-            store_data.sc_res_chis=rot_info['chis']
+            k=self.get_bin_from_frame_and_pose(rot_info["frame"],pose,scbb_resN, verbose=1)
+            if self.store_res_names_in_hash :
+                 resnames=self.name_data
+            else:
+                 resnames=name_data_type(None,None)
+#            store_data.sc_res_chis=rot_info['chis']
             scbb_res_chis=[]
-            if chi1 in self.scbb_torsions: scbb_res_chis.append(int(pose.residue(scbb_resN).chi(1))/10)
-            if chi2 in self.scbb_torsions: scbb_res_chis.append(int(pose.residue(scbb_resN).chi(2))/10)
-            store_data.scbb_res_chis=tuple(scbb_res_chis)
+            if 'chi1' in self.scbb_torsions: scbb_res_chis.append(int(pose.residue(scbb_resN).chi(1))/10)
+            if 'chi2' in self.scbb_torsions: scbb_res_chis.append(int(pose.residue(scbb_resN).chi(2))/10)
+#            store_data.scbb_res_chis=tuple(scbb_res_chis)
+            store_data=store_data_type(sc_res_chis=rot_info['chis'],scbb_res_chis=tuple(scbb_res_chis),res_names=resnames)
             self.dd[k].add( store_data )
             self.n_added+=1
             if self.n_added % 1000==0:
@@ -137,15 +156,16 @@ class make_hash_sc_scbb(bb_hash_sc_scbb):
         return d1
 
 class use_hash_sc_scbb(bb_hash_sc_scbb):
-    def __init__(self,hash_function,scbb_torsions,filename,res_names_in_hash,name_data=[]):
+    def __init__(self,hash_function,scbb_torsions,filename,res_names_in_hash,name_data=name_data_type(None,None)):
         bb_hash_sc_scbb.__init__(self,hash_function,scbb_torsions)
-        if not res_names_in hash:self.name_data=name_data  # if names are not in hash, need to specify them here
+        if not res_names_in_hash: self.name_data=name_data  # if names are not in hash, need to specify them here
         self.dd =pickle.load(open(filename,"rb"))
-        self.observed_keys=list(self.dd.keys())
+        self.observed_keys=set(self.dd.keys())
+        self.res_names_in_hash=res_names_in_hash
         
  #two options when using hash:  1) count number of hits (bidentate hbs) and replace residue types in pose for each hit and
 # 2) return full info for each hit (all rots and relevant chis).            
-    def count_sc_scbb(self,pept,prot, contact_list):
+    def count_sc_scbb(self,pept,prot, contact_list=[]):
 #        mr = protocols.simple_moves.MutateResidue()
         nhb=0
         res_pair=namedtuple('res_pair',['pept_resN','prot_resN','hash_info'])
@@ -154,7 +174,8 @@ class use_hash_sc_scbb(bb_hash_sc_scbb):
         for resN in contact_list:
              frame = self.get_frame_from_res(prot.residue(resN))
              for i in range(2,pept.size()):
-                k=self.get_bin_from_frame_and_pose(self, frame, pept, i)
+                k=self.get_bin_from_frame_and_pose(frame, pept, i)
+                print('bin: ', k,nhb)
                 if k in self.observed_keys:
                   nhb=nhb+1
                   hash_info=next(iter(self.dd[k]))   # here just take random rot in hash bin
@@ -170,7 +191,7 @@ class use_hash_sc_scbb(bb_hash_sc_scbb):
              #need to unpack residue names, the relevant backbone torsions, and the chi angles
              # residue names are either stored in hash, or specified when hash object is set up. advantage of former is that same hash can contain multiple different res pairs, the advantage of latter is that it is more memory efficient.
              if self.res_names_in_hash:
-                 mr.set_res_name(res_pair.hash_info.sc_resName)
+                 mr.set_res_name(res_pair.hash_info.res_names.sc_resName)
              else:
                  mr.set_res_name(self.name_data.sc_resName)
              mr.set_target(res_pair.prot_resN)
@@ -179,8 +200,8 @@ class use_hash_sc_scbb(bb_hash_sc_scbb):
              for chi in res_pair.hash_info.sc_res_chis():
                  prot.set_chi(nchi,res_pair.prot_resN,chi)
                  nchi=nchi+1
-             if self.res_names_in hash:
-                 mr.set_res_name(res_pair.hash_info,scbb_resName)
+             if self.res_names_in_hash:
+                 mr.set_res_name(res_pair.hash_info.res_names.scbb_resName)
              else:
                  mr.set_res_name(self.name_data.scbb_resName)
              mr.set_target(res_pair.pept_resN)
@@ -209,88 +230,26 @@ class use_hash_sc_scbb(bb_hash_sc_scbb):
         key_set=set(self.dd.keys())
         return key_set
 
-
-
-    # def count_nhb(self,pept,prot):
-    #     nhb=0
-    #     prot_res=prot.residue(1) #skip termini as atom types differ
-    #     pept_residue=pept.residue(1)
-    #         #for prot_res in prot_residues:
-    #     frame = self.get_frame_from_res(prot_res)
-    #     bb_rays=get_bb_rays_from_res(pept_residue)
-    #     k=self.get_bin_from_rot_and_frame(bb_rays,frame)
-    #     if k in self.dd.keys():
-    #         nhb=nhb+1
-    #         chis=next(iter(self.dd[k]))   # for now, use random rot
-    #         self.res_list.append( (prot_res.seqpos(),10*chis[0],10*chis[1]) )
-    #         print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
-    #     #if nhb>0: self.replace_residues_and_chis(prot)
-        
-    #     return nhb
-    
-
-    
-    # def replace_residues_and_chis(self,pept,prot):
-    #      mr = pyrosetta.rosetta.protocols.simple_moves.MutateResidue()
-    #      mr.set_res_name('HIS')
-    #      for res_info in self.res_list:
-    #          mr.set_target(res_info[0])
-    #          mr.apply(prot)
-    #          prot.set_chi(1,res_info[0],res_info[1])
-    #          prot.set_chi(2,res_info[0],res_info[2])
-             
-
-
-    # def get_all_rots(self,pept,prot):
-
-    #     rots={}
-    #     nhb=0
-    #     prot_residues=[prot.residue(i) for i in range(2,prot.size())] #skip termini as atom types differ
-    #     pept_residues=pept.residue(1)
-    #     self.res_list=[]
-    #     for prot_res in prot_residues:
-    #          frame = self.get_frame_from_res(prot_res)
-    #          for pept_residue in pept_residues:
-    #             bb_rays=self.get_bb_rays_from_res(pept_residue)
-    #             k=self.get_bin_from_rot_and_frame(bb_rays,frame)
-    #             if k in self.dd.keys():
-    #               nhb=nhb+1
-    #               rots[prot_res.seqpos()]=self.dd[k]
-    #               print prot_res.seqpos(),prot_res.name1(),pept_residue.seqpos(),pept_residue.name1()
-        
-    #     return nhb,rots
-
-    def test_hash(self,pdb,sc_resN,scbb_resN):
-        p=rosetta.core.import_pose.pose_from_file(pdb)
-        bb_res=p.residue(2)
-        asn_res=p.residue(4)
-        frame = self.get_frame_from_res(pose.residue(sc_resN))
-        k=self.get_bin_from_frame_and_pose(self, frame, p, sc_resN)                                        
-        bb_rays=self.get_bb_rays_from_res(pept_residue)
-        if k in self.dd.keys():
-            print(dd[k])
-            return 1
-        else:
-            return 0
-
-            
 import string
 if __name__ == "__main__":
     pyrosetta.init()
-    prot=rosetta.core.import_pose.pose_from_file("5AEI_A.pdb")
-    pept=rosetta.core.import_pose.pose_from_file("5AEI_D.pdb")
-#    hash_chi=use_hash_rot(1.0,3.0,"bb_asn_hash_combo_new_ray_1.0_rot0")
-#    hash_nc=use_hash(1.0,3.0,"bb_asn_hash_combo_new_ray_1.0_rot0")
-    hash_nc=use_hash_rot(1.0,3.0,"bb_asn_dict_combo_1.0_rot0")
-    nhb=hash_nc.count_asn_bb(pept,prot)
-#    s=hash_nc.convert_to_set()
-#    pickle.dump(s,open("bb_asn_dict_combo_1.0_set","wb"))
-    print(nhb)
-    pdb_list=map(string.split,open('pdb.list','r').readlines())
+    hash_function=rif.hash.RosettaStubTwoTorsionHash(phi_resl=10, cart_resl=1, ori_resl=10, cart_bound=32)
+    scbb_torsions=['phi','psi']
+#    filename='ASN_BB_10_1_10_5_21'
+    filename='ASN_BB_10_1_10_5_21_w_resNAME2'
+    res_names_in_hash=1
+    hash_nc=use_hash_sc_scbb(hash_function,scbb_torsions,filename,res_names_in_hash)
+
+    pdb_list=map(str.split,open('pdb.list','r').readlines())
     for pdb in pdb_list:
-        p=rosetta.core.import_pose.pose_from_file(pdb[0])
-        pept,prot=p.split_by_chain()
-        nhb=hash_nc.count_asn_bb(pept,prot)
-        print(nhb,pdb)
+       p=rosetta.core.import_pose.pose_from_file(pdb[0])
+       pept,prot=p.split_by_chain()
+       contact_list=range(1,prot.size()+1)
+       nhb=hash_nc.count_sc_scbb(pept,prot,contact_list)
+       print(nhb,pdb[0])
+       if nhb> 0: prot.dump_pdb('%s_%s.pdb'%(nhb,pdb[0]))
+
+            
+
         
 

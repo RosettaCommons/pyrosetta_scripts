@@ -20,6 +20,7 @@ import copy
 ## and their backbone frames are generated at the beginning and then kept fixed during the MC.  By default, what is stored in hash are the chi angles of sc_res, and any chi angles## in scbb_torsions.  Can additional store residue names for case where hash contains multiple residue pairs ("store_res_names_in_hash")
 # the input pdb should have two chains.  one chain is a single residue contributing the sidechain interactions (sc_res) and the other a tripeptide with its 2nd residue contributing the sidechain+backbone interactions (scbb_res); specify the residue number of sc_res in the input file using sc_resN
 
+
 def get_options():
     #set up the parameters
     options={}
@@ -34,16 +35,15 @@ def get_options():
     options['scbb_torsions']=['phi','psi']  # these are the torsions that affect hbond geometry and will be varied in MC
     options['scbb_jump_atom']='O'
     options['sc_jump_atom']='ND2'
-    options['scbb_torsions']= {'phi': {'interval': float(5.), 'nsamples': int(1) }, 'psi' : {'interval': float(5.) , 'nsamples': int(1) }}
-#    options['scbb_torsions']= {'phi': {'interval': float(5.), 'nsamples': int(21) }, 'psi' : {'interval': float(5.) , 'nsamples': int(21) }}
+    options['scbb_torsions']= {'phi': {'interval': float(5.), 'nsamples': int(21) }, 'psi' : {'interval': float(5.) , 'nsamples': int(21) }}
 #required output specifications
     options["store_res_names_in_hash"]= 1
-    options['hashtable_name']='ASN_BB_tiny'
+    options['hashtable_name']='ASN_BB_10_1_10_5_21_w_resNAME2'
 #the below don't have to be set on a case by case basis
     options['target_phi_psi_list'] = ['helical','sheet']
     options['temperature']=float(0.2)
-    options['MC_cycles']=10
-    options['dump_interval']=1  # write out structures for every nth addition to hash
+    options['MC_cycles']=4000
+    options['dump_interval']=1000  # write out structures for every nth addition to hash
     options['Gaus_trans_mag']=float(0.25)
     options['Gaus_rot_mag']=float(1.5)
     options['thresholdE_for_hash']=-0.2
@@ -66,6 +66,21 @@ def get_options():
     print(opts)
     return options,opts
 
+def get_argparse():
+    parser = argparse.ArgumentParser(description='Generate hash table by MC sampling of interaction between sidechain and peptide')
+    parser.add_argument('--input_pdb_file', type=str, dest='input_pdb',
+                   default=options['input_pdb'])
+                   help='input structure with example of interaction')
+    parser.add_argument('--MC_cycles', type=int, dest='total_cycles',
+                   default=int(options['MC_cycles']),
+                   help='number of monte carlo cycles')
+    parser.add_argument('--dump_interval', type=int, dest='dump_interval',
+                   default=options['dump_interval'],
+                   help='how often to dump pdbs')
+    parser.add_argument('--hash_file_name',type=str,dest='hashtable_name',
+                        default=options['hash_table_name'],
+                        help='name of generated hash file')
+    return parser
 
 name_data_type=namedtuple('name_data_type',['sc_resName','scbb_resName'])
 
@@ -175,7 +190,9 @@ if __name__ == '__main__':
     pdb_jump = int(options['jump'])
     sc_resN=int(options['sc_resN'])
     scbb_resN=int(options['scbb_resN'])
-    gn,name_data=get_start_pdb(options['input_pdb'],options['sc_jump_atom'], options['scbb_jump_atom'],sc_resN,scbb_resN)
+    T = options['temperature']
+    thresholdE_for_hash=float(options['thresholdE_for_hash'])
+    gn,name_data=get_start_pdb(input_pdb,options['sc_jump_atom'], options['scbb_jump_atom'],sc_resN,scbb_resN)
     gn.dump_pdb('re_rooted.pdb')
     if options['constraint_file']:
         pyrosetta.rosetta.core.scoring.constraints.add_constraints_from_cmdline_to_pose(gn)
@@ -189,10 +206,7 @@ if __name__ == '__main__':
     old_E=sf_sys(gn)
     low_E=old_E
     print('Starting energy',old_E)
-    T = options['temperature']
-    thresholdE_for_hash=float(options['thresholdE_for_hash'])
-    total_cycle = int(options['MC_cycles'])
-    dump_interval=int(options['dump_interval'])
+
     dump_it=0
     n_accept = 0
     n_accept_below_threshold=0
@@ -278,7 +292,6 @@ if __name__ == '__main__':
                     n_accept_below_threshold = n_accept_below_threshold + 1
 
                     if dump_it> dump_interval:
-                        print('dumping pdb: t%s'%i)
                         gn.dump_pdb('t%s.pdb'%i)
                         dump_it=0
 
@@ -305,5 +318,5 @@ gn.set_jump(pdb_jump,j)
 gn.dump_pdb('finalpre.pdb')
 #gn.replace_residue(int(options['Resi_num']),rot1,False)
 #gn.dump_pdb('final.pdb')
-pickle.dump(hc.dd, open(options['hashtable_name'], "wb"))
+pickle.dump(hc.dd, open(hashtable_name, "wb"))
 
