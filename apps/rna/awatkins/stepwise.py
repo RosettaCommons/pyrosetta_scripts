@@ -25,7 +25,7 @@ def get_argparse():
 
 def stepwise(starting_pdbs, native_pdb, align_pdb, fasta, nstruct, silent_file):
 	chm = rosetta.core.chemical.ChemicalManager.get_instance()
-	rts = chm.residue_type_set('fa_standard').get_self_weak_ptr()
+	rts = chm.residue_type_set('fa_standard')
 	sfxn = core.scoring.ScoreFunctionFactory.create_score_function("stepwise/rna/rna_res_level_energy4.wts")
 
 	# Obtain 'native' and 'align' pose. The 'align' pose is sometimes a subset of the native
