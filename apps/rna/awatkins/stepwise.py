@@ -57,7 +57,7 @@ def stepwise(starting_pdbs, native_pdb, align_pdb, fasta, nstruct, silent_file):
 	# our case, there isn't) add it to the Pose. This helps cheaply avoid clashes
 	# with a Pose that is too expensive to directly hold in memory.
 	protocols.scoring.fill_vdw_cached_rep_screen_info_from_command_line(pose)
-	protocols.stepwise.setup.initialize_native_and_align_pose(native_pose, align_pose, rts, pose)
+	core.import_pose.initialize_native_and_align_pose(native_pose, align_pose, rts, pose)
 
 	# You may want to activate a PyMOL observer here.
 
