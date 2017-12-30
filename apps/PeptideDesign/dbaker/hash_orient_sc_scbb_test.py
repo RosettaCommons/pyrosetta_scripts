@@ -69,7 +69,7 @@ def get_options():
 def get_argparse():
     parser = argparse.ArgumentParser(description='Generate hash table by MC sampling of interaction between sidechain and peptide')
     parser.add_argument('--input_pdb_file', type=str, dest='input_pdb',
-                   default=options['input_pdb'])
+                   default=options['input_pdb'],
                    help='input structure with example of interaction')
     parser.add_argument('--MC_cycles', type=int, dest='total_cycles',
                    default=int(options['MC_cycles']),
