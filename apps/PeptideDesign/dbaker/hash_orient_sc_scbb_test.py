@@ -1,4 +1,9 @@
 #!/software/miniconda3/envs/pyrosetta3/bin/python
+
+# AMW NOTE: We can't actually use this as a test because it imports "rif.hash" and that isn't included
+# in our current distribution of pyrosetta_cripts?
+exit()
+
 import pyrosetta
 import argparse
 import math
@@ -12,6 +17,7 @@ from rosetta.protocols.protein_interface_design.movers import TryRotamers
 import rif.hash
 from hash_subclass_sc_scbb import *
 import copy
+
 
 ## Use Monte Carlo to generate look up tables for low energy interactions (eg bidentate hbonds) between a sidechain in "sc_res" and a sidechain+backbone in "scbb_res".
 ## Must provide an input pdb file with sc_res as a single residue and scbb_res in the 2nd position of a tripeptide, and specify a pair of interacting heavy atoms for
