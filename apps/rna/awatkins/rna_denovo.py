@@ -5,8 +5,8 @@ from pyrosetta import *
 from pyrosetta.rosetta import *
 
 from rosetta.core.pose import *
+from rosetta.core.import_pose import *
 from rosetta.protocols.rna.denovo import *
-from rosetta.protocols.rna.denovo.setup import *
 
 """
 Run rna_denovo through a PyRosetta interface. Embed this in a larger python script! Go to town.
