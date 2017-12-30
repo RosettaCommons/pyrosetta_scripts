@@ -7,7 +7,7 @@ from pyrosetta.rosetta import *
 from rosetta.protocols.stepwise.monte_carlo import *
 from rosetta.protocols.stepwise.monte_carlo.options import *
 from rosetta.protocols.stepwise.monte_carlo.submotif import *
-	
+
 
 """
 Run stepwise through a PyRosetta interface. Embed this in a larger python script! Go to town.
