@@ -1,9 +1,5 @@
 #!/software/miniconda3/envs/pyrosetta3/bin/python
 
-# AMW NOTE: We can't actually use this as a test because it imports "rif.hash" and that isn't included
-# in our current distribution of pyrosetta_cripts?
-exit()
-
 import pyrosetta
 import argparse
 import math
@@ -191,6 +187,9 @@ def hb_energy_fxn():
     return sf
 
 if __name__ == '__main__':
+    # AMW NOTE: We can't actually use this as a test because it imports "rif.hash" and that isn't included
+    # in our current distribution of pyrosetta_cripts?
+    pass
     options, opts=get_options()
     pyrosetta.init(extra_options=' '.join(opts))
     pdb_jump = int(options['jump'])
@@ -316,13 +315,15 @@ if __name__ == '__main__':
          low_jumps.append(low_jump)
      
         
-print('low energy: %s'%low_E)
-j.set_rotation(low_rot)
-j.set_translation(low_trans)
-gn.set_jump(pdb_jump,j)
-#rot1 = make_hash(cart_resl,ang_resl,options['target_phi_psi_list'],options['orient_atoms']).orient_rots(gn.residue(int(options['Resi_num'])), options['Resi_name'])[1]
-gn.dump_pdb('finalpre.pdb')
-#gn.replace_residue(int(options['Resi_num']),rot1,False)
-#gn.dump_pdb('final.pdb')
+# AMW NOTE: We can't actually use this as a test because it imports "rif.hash" and that isn't included
+# in our current distribution of pyrosetta_cripts?
+#print('low energy: %s'%low_E)
+#j.set_rotation(low_rot)
+#j.set_translation(low_trans)
+#gn.set_jump(pdb_jump,j)
+##rot1 = make_hash(cart_resl,ang_resl,options['target_phi_psi_list'],options['orient_atoms']).orient_rots(gn.residue(int(options['Resi_num'])), options['Resi_name'])[1]
+#gn.dump_pdb('finalpre.pdb')
+##gn.replace_residue(int(options['Resi_num']),rot1,False)
+##gn.dump_pdb('final.pdb')
 pickle.dump(hc.dd, open(hashtable_name, "wb"))
 
