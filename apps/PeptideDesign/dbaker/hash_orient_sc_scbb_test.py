@@ -10,7 +10,8 @@ from rosetta.numeric import xyzVector_double_t as V3
 from rosetta.numeric import xyzMatrix_double_t as M3
 import pickle
 from rosetta.protocols.protein_interface_design.movers import TryRotamers
-import rif.hash
+# IMPORTANT: you can't test anything in this repo that depends on tools from outside it!
+####import rif.hash
 from hash_subclass_sc_scbb import *
 import copy
 
