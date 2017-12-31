@@ -12,7 +12,7 @@ import pickle
 from rosetta.protocols.protein_interface_design.movers import TryRotamers
 # IMPORTANT: you can't test anything in this repo that depends on tools from outside it!
 ####import rif.hash
-from hash_subclass_sc_scbb import *
+####from hash_subclass_sc_scbb import *
 import copy
 
 
