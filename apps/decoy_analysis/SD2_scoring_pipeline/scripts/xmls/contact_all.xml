@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <AtomicContactCount name="contact_all" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="contact_all" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

@@ -1,0 +1,13 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<TASKOPERATIONS>
+    <LayerDesign name="layer_core_boundary_SCN" layer="core_boundary" pore_radius="2.0" verbose="true" use_sidechain_neighbors="True" />
+</TASKOPERATIONS>
+<FILTERS>
+    <SecondaryStructureHasResidue name="ss_contributes_core" secstruct_fraction_threshold="1.0" res_check_task_operations="layer_core_boundary_SCN" required_restypes="VILMFYW" nres_required_per_secstruct="1" filter_helix="1" filter_sheet="1" filter_loop="0" min_helix_length="4" min_sheet_length="3" min_loop_length="1" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="ss_contributes_core"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

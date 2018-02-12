@@ -1,0 +1,13 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<TASKOPERATIONS>
+    <LayerDesign name="layer_core_SCN" layer="core" pore_radius="2.0" verbose="true" use_sidechain_neighbors="True" core="4" />
+</TASKOPERATIONS>
+<FILTERS>
+  <AtomicContactCount name="contact_core_SCN" task_operations="layer_core_SCN" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="contact_core_SCN"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

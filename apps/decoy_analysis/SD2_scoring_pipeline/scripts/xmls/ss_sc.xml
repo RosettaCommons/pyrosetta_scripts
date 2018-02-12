@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <SSShapeComplementarity name="ss_sc" verbose="0" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="ss_sc"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

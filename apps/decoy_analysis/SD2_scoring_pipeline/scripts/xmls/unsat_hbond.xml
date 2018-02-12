@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <BuriedUnsatHbonds name="unsat_hbond" confidence="0" jump_number="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="unsat_hbond" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

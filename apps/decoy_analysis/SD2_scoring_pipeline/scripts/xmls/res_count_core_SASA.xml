@@ -1,0 +1,17 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<TASKOPERATIONS>
+    <LayerDesign name="layer_core_SASA" layer="core" core="20" pore_radius="2.0" verbose="true" />
+    <OperateOnCertainResidues name="no_ala_disulf" >
+      <ResidueName3Is name3="ALA" />
+      <RestrictToRepackingRLT />
+    </OperateOnCertainResidues>
+</TASKOPERATIONS>
+<FILTERS>
+    <ResidueCount name="res_count_core_SASA" task_operations="layer_core_SASA,no_ala_disulf" max_residue_count="9999" confidence="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="res_count_core_SASA"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

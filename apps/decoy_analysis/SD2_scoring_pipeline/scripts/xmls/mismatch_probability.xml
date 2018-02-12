@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <SSPrediction name="mismatch_probability" confidence="0" cmd="/work/tlinsky/Rosetta/tools/fragment_tools/psipred/runpsipred_single" use_probability="1" mismatch_probability="1" use_svm="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="mismatch_probability" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

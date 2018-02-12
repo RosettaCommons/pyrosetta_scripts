@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <PackStat name="pack" confidence="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="pack"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

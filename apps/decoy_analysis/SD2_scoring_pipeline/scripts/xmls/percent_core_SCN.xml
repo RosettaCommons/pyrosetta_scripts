@@ -1,0 +1,22 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<TASKOPERATIONS>
+    <LayerDesign name="layer_core_SCN" layer="core" pore_radius="2.0" verbose="true" use_sidechain_neighbors="True" core="4" />
+    <OperateOnCertainResidues name="no_ala_disulf" >
+      <ResidueName3Is name3="ALA" />
+      <RestrictToRepackingRLT />
+    </OperateOnCertainResidues>
+</TASKOPERATIONS>
+<FILTERS>
+    <ResidueCount name="res_count_core_SCN" task_operations="layer_core_SCN,no_ala_disulf" max_residue_count="9999" confidence="0"/>
+    <ResidueCount name="res_count_all" max_residue_count="9999" confidence="0"/>
+    <CalculatorFilter name="percent_core_SCN" equation="rescount_coreSCN / (rescount3 + 0.01)" threshold="-0.35" confidence="0" >
+        <Var name="rescount3" filter="res_count_all"/>
+        <Var name="rescount_coreSCN" filter="res_count_core_SCN"/>
+    </CalculatorFilter>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="percent_core_SCN"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

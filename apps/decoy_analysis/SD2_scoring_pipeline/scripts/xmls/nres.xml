@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <ResidueCount name="nres" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="nres"/>
+</PROTOCOLS>
+</ROSETTASCRIPTS>

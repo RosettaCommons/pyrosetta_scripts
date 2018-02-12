@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <SSShapeComplementarity name="helix_sc" verbose="1" loops="0" helices="1" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="helix_sc" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>
