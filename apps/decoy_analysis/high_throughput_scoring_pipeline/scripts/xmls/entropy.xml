@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <DisulfideEntropy name="entropy" lower_bound="0" tightness="2" confidence="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="entropy" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

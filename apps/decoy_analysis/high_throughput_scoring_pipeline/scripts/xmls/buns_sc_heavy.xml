@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <BuriedUnsatHbonds name="buns_sc_heavy" report_sc_heavy_atom_unsats="true" ignore_surface_res="true" residue_surface_cutoff="20.0" ignore_bb_heavy_unsats="false" confidence="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="buns_sc_heavy" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

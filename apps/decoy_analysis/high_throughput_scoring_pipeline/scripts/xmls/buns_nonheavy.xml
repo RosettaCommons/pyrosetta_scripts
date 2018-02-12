@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <BuriedUnsatHbonds name="buns_nonheavy" report_nonheavy_unsats="true" ignore_surface_res="true" residue_surface_cutoff="20.0" confidence="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="buns_nonheavy" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

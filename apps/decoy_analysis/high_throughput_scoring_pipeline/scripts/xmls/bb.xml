@@ -1,0 +1,18 @@
+<ROSETTASCRIPTS>
+<SCOREFXNS>
+    <ScoreFunction name="SFXN7" weights="beta" />
+</SCOREFXNS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <ResidueCount name="nres" confidence="0" />
+    <ScoreType name="hbond_sfn" scorefxn="SFXN7" score_type="hbond_lr_bb" threshold="0"/>
+    <CalculatorFilter name="bb" equation="hbond / (rescount+0.01)" threshold="-0.23" confidence="0">
+        <Var name="hbond" filter="hbond_sfn"/>
+        <Var name="rescount" filter="nres"/>
+    </CalculatorFilter>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="bb" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

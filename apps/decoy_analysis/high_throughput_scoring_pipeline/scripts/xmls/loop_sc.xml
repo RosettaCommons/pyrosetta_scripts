@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <SSShapeComplementarity name="loop_sc" verbose="1" loops="1" helices="0" confidence="0" />
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="loop_sc" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>

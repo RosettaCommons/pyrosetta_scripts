@@ -1,0 +1,10 @@
+<ROSETTASCRIPTS>
+<MOVERS>
+</MOVERS>
+<FILTERS>
+    <ResidueCount name="AlaCount" residue_types="ALA" max_residue_count="9999" confidence="0"/>
+</FILTERS>
+<PROTOCOLS>
+    <Add filter_name="AlaCount" />
+</PROTOCOLS>
+</ROSETTASCRIPTS>
