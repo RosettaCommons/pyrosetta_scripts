@@ -70,8 +70,6 @@ then
 	mv PSSM_0001.csv $project_name 
 	cd $project_name
 	python ../generate_favorable_mutations.py MutationsinBatch -s $((pssm_threshold)) -w $dist_threshold -l $((contact_threshold))
-	read -p "Enter the name of the file containing mutations that will be treated as the standard for analysis (filename.csv): " truefile
-	python ../generate_results.py GenerateinBatch -t $truefile
 	cd ..
 	exit
 fi

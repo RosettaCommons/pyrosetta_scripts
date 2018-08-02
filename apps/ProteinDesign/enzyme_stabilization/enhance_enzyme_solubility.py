@@ -7,7 +7,7 @@
 # (c) addressed to University of Washington CoMotion, email: license@uw.edu.
 
 ## @file   ~/enhance_enzyme_solubility.py
-## @brief  calculating the distance to the active site and contact number for each residue in an enzyme 
+## @brief  calculating the distance to the active site and contact number for each residue in an enzyme, and also using filters on PSSM, contact nubmer and distance to active site to generate all favorable mutations for a given enzyme. 
 ## @author Raisa Noshin
 
 import os, math, subprocess, csv
@@ -24,12 +24,13 @@ parser = argparse.ArgumentParser(prog='Enhance Enzyme Solubility', description="
 subparsers = parser.add_subparsers(help='Usage: python enhance_enzyme_solubility.py {RunMode} -flags', dest='path')
 
 parser_one = subparsers.add_parser('GenerateMutations', help='Uses PSSM score, distance to active site, and contact number information to calculate solubilty-enhancing mutations that maintain catalytic activity.')
-parser_one.add_argument('-p','--score_threshold',action='store',default=0,dest='pssm_threshold', help="Indicate the threshold above which PSSM scores will be favorable. Default: 0")
+parser_one.add_argument('-s','--score_threshold',action='store',default=0,dest='pssm_threshold', help="Indicate the threshold above which PSSM scores will be favorable. Default: 0")
 parser_one.add_argument('-d','--distance_threshold',action='store',default=15.0,dest='dist_threshold',help="Indicate the Calpha distance to the active site threshold above which will enhance favorablility. Default: 15.0")
 parser_one.add_argument('-c','--contact_threshold',action='store',default=16,dest='contact_threshold',help="Indicate the contact number below which enhance favoribility. Default: 16")
-parser_one.add_argument('-o','--outfile',action='store',dest='outfilename',default='',help="Specify the desired name for the final file containing all favorable mutations. Default: 'favorable_mutations.csv'")
+parser_one.add_argument('-o','--outfile',action='store',dest='outfilename',default='enzyme_0001',help="Specify the desired name for the project. Default: 'enzyme_0001'")
 parser_one.add_argument('-m','--pssm',action='store',required=True,dest='pssm_filename',help='Provide the file name for the csv file containing the PSSM scores formatted similar to the output of the script written to calculate PSSM score by J. Klesmith.')
 parser_one.add_argument('-n','--distance_and_contact',required=True,action='store',dest='dist_and_contact_filename',help='Provide the file name for the csv file containing the distance to the active site and contact number for each residue formatted into four columns with the following information [Position, WT_Residue, Distance to Active Stie, Contact Number]')
+parser_one.add_argument('-p','--possibilities',action='store_true',dest='possibilites',help='Use this flag to indicate that you would like a file generated with all possible mutations and their respective information.')
 
 parser_two = subparsers.add_parser('CalculateDistAndCN',help='Runs the script written to calculate the distance to the active site and the contact number of each residue in a protein.')
 parser_two.add_argument('-o','--outfile',action='store',default='results.csv',dest='outfilename',help="Specify the desired name for the output file containing the distance to the active site and contact number (Default: 'results.csv'): ")
@@ -41,7 +42,15 @@ parser_two.add_argument('-r','--rosetta',action='store',dest='rpath',required=Tr
 parswer_two.add_argument('-a','--asite',action='store',dest='asite',help='Enter the path to the file containing the active site coordinates for the pdb structure in question. Note: This is required if the -l flag is not used.')
 options = parser.parse_args()
 
-def enhance_enzyme_solubility():
+amino_acids = {'A':'ALA','R':'ARG','N':'ASN','D':'ASP','C':'CYS','Q':'GLN','E':'GLU','G':'GLY','H':'HIS','I':'ILE','L':'LEU','K':'LYS','M':'MET','F':'PHE','P':'PRO','S':'SER','T':'THR','W':'TRP','Y':'TYR','V':'VAL','U':'SEL','O':'PYL'}
+
+#Distance to active site: Defined as the minimum Calpha distance of a specified residue to the active site. All active site coordinates provided are used to evaluate the minimum. In optimal conditions, this value is high (>15). 
+#Contact Number: Defined as the number of adjacent residues to a specified residue. In optimal conditions, this value is low (<16)
+#PSSM: Defined as the evolutionary conservation of a specifed residue. This script runs with the assumption that the format of the file is in accordance with J. Klesmith's PSSM-calculating script (GitHub username: Jklesmith). In optimal conditions, this value is high (>0)
+#Above filters obtained from http://www.pnas.org/content/114/9/2265
+
+
+def dist_contact_filters():
 	#Script for calculating the Calpha distance to active site as well as the contact number for each residue in the backbone of an enzyme
 	
 	#Check if the given files can be opened
@@ -62,7 +71,7 @@ def enhance_enzyme_solubility():
 		oscompiler = 'linuxgcc'
 	else:
 		print "Accepted operators are Mac and Linux, any other operator is not supported."
-	if options.rpath[-1] != '/'
+	if options.rpath[-1] != '/':
 		options.rpath += '/'
 
 	activesite = []
@@ -250,18 +259,247 @@ def verify_line(line):
 	else:
 		return value
 
-def contact_number(cleaned_pdb, rpath,oscompiler,backbone):
+def contact_number(cleaned_pdb,rpath,oscompiler,backbone):
+	#calls the contact_num.xml script written to use the AverageDegree Filter from Rosetta to calculate the contact number
 	print "Calculating the contact number for each residue..."
-	sub_call = rpath+'main/source/bin/rosetta_scripts.'+oscompiler+'release -database '+rpath+'main/database/'+' -parser:protocol '+'../contact_num.xml -s '+cleaned_pdb+' -ignore_unrecognized_res -ex1 -ex2 -use_input_sc -no_his_his'
-def euclidean(list1, list2)
+	sub_call = rpath+'main/source/bin/rosetta_scripts.'+oscompiler+'release -database '+rpath+'main/database/'+' -parser:protocol '+'../contact_num.xml -s '+cleaned_pdb+' -ignore_unrecognized_res -ex1 -ex2 -use_input_sc -no_his_his_pairE'+' -flip_HNQ -overwrite > contact_numbers.txt'
+	try:
+		status = os.system(sub_call)
+		subprocess.call(sub_call,shell=True)
+		print "Contact Numbers successfully generated!"
+	except (OSError, ValueError):
+		print e, ": Unable to calculate the contact number. Please check if your path to Rosetta is correct, and if you specified the correct OS and compiler. Also make sure your pdb file, this script, and the file entitled 'contact_num.xml' are within the current directory."
+		return
+	except subprocess.CalledProcessError as f:
+		print f.output
+		return
+	with open('contact_numbers.txt') as contact:
+		lines = []
+		output = []
+		for line in contact:
+			lines.append(line)
+		begin = -1
+		end = -1
+		for element in lines:
+			if end == -1:
+				end = element.find("END FILTER")
+				if end != -1:
+					break
+			else:
+				break
+			if begin == -1:
+				begin = element.find("BEGIN FILTER")
+			else:
+				if(isinstance(element.find("Connectivity"),(int,float))):
+					line = element.split()
+					amino_acid = line[-3][:3]
+					temp = [amino_acid,line[-1]]
+					output.append(temp)
+	if len(output) != len(backbone):
+		print "WARNING in processing the contact number: Numbers generated do not fully match the number of backbone residues."
+	return output
+
+def euclidean(list1,list2):
+	#calculates the euclidean distance from two lists containing 3-dimensional coordinates
+	point1 = []
+	point2 = []
 	
+	for coordinate in list1:
+		if coordinate == '':
+			continue
+		else:
+			to_append = coordinate.rstrip()
+			point1.append(to_append)
+	for coordinate in list2:
+		if coordinate == '':
+			continue
+		else:
+			to_append = coordinate.rstrip()
+			point2.append(to_append)
+	print point1,point2
+	print ""
+	try:
+		x1,y1,z1 = float(point1[0]),float(point1[1]),float(point1[2])
+		x2,y2,z2 = float(point2[0]),float(point2[1]),float(point2[2])
+	except (ValueError, IndexError) as e:
+		print e, "One of the following two coordinates is unrecognizable: ", point1,"    ",point2
+		return
+
+	return math.sqrt(math.pow((x2-x1),2)+math.pow((y2-y1),2)+math.pow((z2-z1),2)) 
+	
+def distance_to_active_site(backbone, activesite):
+	#takes each residue in the backbone and calculates the euclidean distance between all the points of the ligand, finally selecting the minimum distance as the official distance to active site 
+	list = []
+	for res in backbone:
+		temp = res[2:]
+		min_dist = 100000000.0
+		for coordinate in activesite:
+			dist = euclidean(temp, coordinate)
+			if dist < min_dist:
+				min_dist = dist
+		temp1 = [res[0],res[1],min_dist]
+		list.append(temp1)
+	return list
+
+def enhance_enzyme_solubility():
+	PSSM = options.pssm_filename
+	dist_cn = options.dist_and_contact_filename
+	try:
+		pssm_threshold = int(options.pssm_threshold)
+		dist_threshold = float(options.dist_threshold)
+		contact_threshold = int(options.contact_threshold)
+	except (ValueError, IndexError) as e:
+		print e, "One of the following three input thresholds is unrecognizable: ", options.pssm_threshold,"  ",options.dist_threshold,"  ",options.contact_threshold
+		return
+
+	favorable_mutations = [['Position','WT','Favorable_Mutation','Distance_to_Active_Site','Contact_Number','PSSM_Score','Designation']] 
+	all_mutations = [['Position','WT','Mutation','Distance_to_Active_Site','Contact_Number','PSSM_Score','Designation']]
+	contact_and_distance = []
+	rows = []
+	columns = []
+
+	#Extracting all rows from PSSM file, with the exception of a blank 3rd row
+
+	print "Opening PSSM file..."
+	with open(PSSM, 'rU') as input:
+		reader = csv.reader(input)
+		data = list(list(rec) for rec in csv.reader(input,delimiter=','))
+	for i in range(23):
+		if i == 2:
+			pass
+		else:
+			rows.append(data[i])
+	if len(rows) == 0:
+		print "Unable to open PSSM file. Please ensure that the file name provided includes the .csv extension. Example: 'filename.csv'"
+		return
+
+	#Transposing rows to get a list of columns from the PSSM file
+
+	unedited_columns = map(list,zip(*rows))
+
+	#Editing columns list to remove items with 'None' listed instead of a score
+
+	for column in unedited_columns:
+		counter = 0
+		for row in column:
+			row = row.rstrip()
+			if row == "None":
+				counter += 1
+			if counter == 0:
+				columns.append(column)
+
+	#Generating a list of just the PSSM scores of each residue 
+
+	scores = []
+	for column in range(len(columns)):
+		scores.append(columns[column][2:])
+
+	if len(scores) == 0:
+		print "Unable to extract scores from PSSM file. Please ensure that the file is a csv file and the .csv extension is included in the filename provided. "
+		return 
+	else:
+		print "PSSM scores successfully extracted! "
+
+	#Extracting the distance to active site and contact number for each residue into a list of lists intitled values
+
+	print "Opening distance to active site and contact number file..."
+	with open(dist_cn) as input:
+		rows = csv.reader(input)
+		contact_and_distance = list(rows)
+	mutations = scores[0]
+	scores = scores[1:]
+	values = contact_and_distance[1:]
+	if len(values) == 0:
+		print "Unable to extract distances and contact numbers from file. Please ensure that the file is a csv file provided in the format 'filename.csv'"
+		return
+	else:
+		print "Distance and contact number data successfully extracted!"
+	columns = columns[1:]
+	#below makes sure the residues in the values list (contact numbers and distance to active site) match those in the columns list (from PSSM)
+	for j in columns:
+		for i in range(len(values)):
+			for key, value in amino_acids.iteritems():
+				if values[i][1] == value:
+					WT = key
+				if (int(values[i][0]) == int(j[0])) & (WT != j[1]):
+					values.insert(i,[j[0],amino_acids[j[1]],0,50,"Note: Residue deleted from model"])
+					for n in range(i+1,len(values)):
+						p = int(values[n][0])
+						values[n][0] = p + 1
+						values[n][0] = str(values[n][0])
+				else:
+					continue	
+
+	#Filtering favorable mutations
+
+	print "Detecting favorable mutations..."
+	for position,score in enumerate(scores):
+		if position > len(values):
+			print "Your models are missing one or more residues. Only residues that are present have been evaluated."
+			break
+		current_position = values[position][0]
+		current_wildtype = values[position][1]
+		current_distance = float(values[position][2])
+		current_contactnum = int(values[position][3])
+		for pointer,current_score in enumerate(score):
+			current_mutation = mutations[pointer]
+			for key, value in amino_acids.iteritems():
+				if current_wildtype == value:
+					current_wildtype_small = key
+			temp1 = [current_position,current_wildtype,current_mutation,current_distance,current_contactnum,current_score,current_wildtype_small+current_position+current_mutation]
+			all_mutations.append(temp1)
+			if (int(current_score) >= pssm_threshold) & (current_distance >= dist_threshold) & (current_contactnum <= contact_threshold):
+				temp = [current_position,current_wildtype,current_mutation,current_distance,current_contactnum,current_score,current_wildtype_small+current_position+current_mutation]
+				favorable_mutations.append(temp)
+				print "Favorable mutation detected at position "+current_position+" from "+current_wildtype+" --> "+current_mutation
+
+	#Writing all possible mutations to a csv file
+
+	if options.possibilities:
+		if len(all_mutations) > 7:
+			print "Generating csv file with all possible mutations..."
+			filename = options.outfilename+"_all_mutations.csv"
+			with open(filename, 'w') as newfile:
+				write = csv.writer(newfile, quoting=csv.QUOTE_ALL)
+				write.writerows(all_mutations)
+			with open(filename) as thefile:
+				if sum(1 for line in thefile) <= 1:
+					print "Unable to write results to a csv file. Printing all possible mutations instead..."
+					print all_mutations
+				else:
+					print "File containing all possible mutations generated and placed in project folder! Name: "+filename
+		else:
+			print "Error in generating mutations. Please check that your files are formatted correctly and that the paths given for them are correct."
+			return
+
+	#Writing favorable mutations to a csv file
+
+	outfilename = options.outfilename
+	if len(favorable_mutations) > 7:
+		print "All favorable mutations generated!" 
+		print "Generating csv file with results..."
+		with open(outfilename, 'w') as newfile:
+			write = csv.writer(newfile,quoting=csv.QUOTE_ALL)
+			write.writerows(favorable_mutations)
+		with open(outfilename) as thefile:
+			if sum(1 for line in thefile) <= 1:
+				print "Unable to write results to a csv file. Printing favorable mutations instead..."
+				print favorable_mutations
+			else:
+				print "File containing favorable mutations generated and placed in current dirrectory! Name: "+outfilename
+	else:
+		print "No favorable mutations detected with the current provided threshholds. Please check if these values are accurate, and that the files are of csv type, with no extraneous spaces or punctuation. Thresholds used were: PSSM - "+pssm_threshold+" Distance to Active Site - "+dist_threshold+" Contact Number - "+contact_threshold
+		return
+
+	return outfilename
+
 def main():
 	if options.path == "GenerateMutations":
 		print "Running Generate Mutations..."
-		generate_mutations()
+		enhance_enzyme_solubility()
 	if options.path == 'CalculateDistAndCN':
 		print "Running Calculate Distance and Contact Number..."
-		enhance_enzyme_solubility()
+		dist_contact_filters()
 
 if __name__ == '__main__':
 	main()
