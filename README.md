@@ -20,14 +20,11 @@ Tree-structure:
  │   ├── examples  
  │   └── tutorials  
  ├── lib  
+ ├── pilot
  ├── pyRosettaScripts  
- │   ├── motifGrafting  
- │   ├── peptideDesign  
- │   │   └── dbaker  
- │   ├── proteinIdealization  
- │   └── toolbox  
  ├── tests  
  └── tools  
+
   
 NOTE 1 : It is not OK to just touch commas, spaces and other cosmetic details or   
          small bug-fixes and then add your name to the list of authors of some code.  
