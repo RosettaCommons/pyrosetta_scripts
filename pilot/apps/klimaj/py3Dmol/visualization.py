@@ -10,7 +10,8 @@ __email__  = "klimaj@uw.edu"
 
 def view_poses(poses=None):
     """View a list of PyRosetta poses in py3Dmol with the ipywidgets interactive slider within a Jupyter notebook.
-    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues in the poses.
+    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues
+    in the poses.
     """
     
     def view_py3Dmol(i=0):
@@ -32,7 +33,8 @@ def view_poses(poses=None):
 
 def view_pdbs(pdb_filenames=None):
     """View a list of .pdb files in py3Dmol with the ipywidgets interactive slider within a Jupyter notebook.
-    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues in the .pdb files.
+    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues
+    in the .pdb files.
     """
 
     def view_py3Dmol(i=0):
@@ -55,7 +57,8 @@ def view_pdbs(pdb_filenames=None):
 def view_residue_selector(pose=None, residue_selector=None, label=False):
     """View a PyRosetta ResidueSelector in a PyRosetta Pose object in py3Dmol within a Jupyter notebook.
     Optionally also label the residues in the PyRosetta ResidueSelector. 
-    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues in the pose.
+    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues
+    in the pose.
     """
     if not isinstance(pose, pyrosetta.rosetta.core.pose.Pose):
         raise ValueError("Input pose should be an instance of pyrosetta.rosetta.core.pose.Pose")
