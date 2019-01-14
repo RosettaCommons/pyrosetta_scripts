@@ -76,6 +76,6 @@ def view_residue_selector(pose=None, residue_selector=None, label=False):
     viewer.setStyle({"resi": residue_list},
                     {"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "whiteCarbon", "radius": 0.25}})  
     if label:
-        viewer.addResLabels({"resi": residue_list})    
+        viewer.addResLabels({"resi": residue_list}, {"fontSize": 12, "showBackground": False, "fontColor": "black"})     
     viewer.zoomTo()
     return viewer.show()
