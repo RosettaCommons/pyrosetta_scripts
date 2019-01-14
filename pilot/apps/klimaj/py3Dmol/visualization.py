@@ -54,28 +54,42 @@ def view_pdbs(pdb_filenames=None):
     return interact(view_py3Dmol, i=s_widget)
 
 
-def view_residue_selector(pose=None, residue_selector=None, label=False):
+def view_pose(pose=None, hbonds=True, residue_selector=None, label=False):
     """View a PyRosetta ResidueSelector in a PyRosetta Pose object in py3Dmol within a Jupyter notebook.
-    Optionally also label the residues in the PyRosetta ResidueSelector. 
+    Optionally also label the residues in the PyRosetta ResidueSelector or show all hydrogen bonds.
     The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues
     in the pose.
     """
     if not isinstance(pose, pyrosetta.rosetta.core.pose.Pose):
         raise ValueError("Input pose should be an instance of pyrosetta.rosetta.core.pose.Pose")
     
-    if not isinstance(residue_selector, pyrosetta.rosetta.core.select.residue_selector.ResidueSelector):
-        raise ValueError(
-            "Input residue_selector should be an instance of pyrosetta.rosetta.core.select.residue_selector.ResidueSelector"
-        )
-        
-    residue_list = list(pyrosetta.rosetta.core.select.get_residues_from_subset(residue_selector.apply(pose)))
-    
     viewer = py3Dmol.view(1200, 800)
     viewer.addModels(pyrosetta.distributed.io.to_pdbstring(pose), "pdb")
     viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "blackCarbon", "radius": 0.025}})
-    viewer.setStyle({"resi": residue_list},
-                    {"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "whiteCarbon", "radius": 0.25}})  
-    if label:
-        viewer.addResLabels({"resi": residue_list}, {"fontSize": 12, "showBackground": False, "fontColor": "black"})     
+
+    if hbonds:
+        hbond_set = pose.get_hbonds()
+        for i in range(1, pose.total_residue() + 1):
+            res_hbonds = hbond_set.residue_hbonds(i, False)
+            if res_hbonds:
+                for j in range(1, len(res_hbonds) + 1):
+                    r = res_hbonds[j]
+                    don_xyz = pose.residue(r.don_res()).xyz(r.don_hatm())
+                    acc_xyz = pose.residue(r.acc_res()).xyz(r.acc_atm())
+                    viewer.addLine({"dashed": True, "color": "black",
+                                    "start": {"x": don_xyz[0], "y": don_xyz[1], "z": don_xyz[2]},
+                                    "end": {"x": acc_xyz[0], "y": acc_xyz[1], "z": acc_xyz[2]}})
+
+    if residue_selector:
+        if not isinstance(residue_selector, pyrosetta.rosetta.core.select.residue_selector.ResidueSelector):
+            raise ValueError(
+                "Input residue_selector should be an instance of pyrosetta.rosetta.core.select.residue_selector.ResidueSelector"
+            )   
+        residue_list = list(pyrosetta.rosetta.core.select.get_residues_from_subset(residue_selector.apply(pose))) 
+        viewer.setStyle({"resi": residue_list},
+                        {"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "whiteCarbon", "radius": 0.25}})  
+        if label:
+            viewer.addResLabels({"resi": residue_list}, {"fontSize": 12, "showBackground": False, "fontColor": "black"})
+    
     viewer.zoomTo()
     return viewer.show()
