@@ -66,8 +66,11 @@ def view_pose(pose=None, residue_selector=None, label=True, hbonds=True, disulfi
     viewer = py3Dmol.view(1200, 800)
     viewer.addModels(pyrosetta.distributed.io.to_pdbstring(pose), "pdb")
 
-    major_radius = 0.5
-    minor_radius = 0.05
+    if residue_selector:
+        major_radius = 0.5
+        minor_radius = 0.05
+    else:
+        minor_radius = 0.25
 
     if residue_selector:
         if not isinstance(residue_selector, pyrosetta.rosetta.core.select.residue_selector.ResidueSelector):
