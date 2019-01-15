@@ -67,16 +67,12 @@ def view_pose(pose=None, residue_selector=None, label=True, hbonds=True, disulfi
     viewer.addModels(pyrosetta.distributed.io.to_pdbstring(pose), "pdb")
 
     if residue_selector:
-        major_radius = 0.5
-        minor_radius = 0.05
-    else:
-        minor_radius = 0.25
-
-    if residue_selector:
         if not isinstance(residue_selector, pyrosetta.rosetta.core.select.residue_selector.ResidueSelector):
             raise ValueError(
                 "Input residue_selector should be an instance of pyrosetta.rosetta.core.select.residue_selector.ResidueSelector"
             )
+        major_radius = 0.5
+        minor_radius = 0.05
         residue_list = list(pyrosetta.rosetta.core.select.get_residues_from_subset(residue_selector.apply(pose))) 
         viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "blackCarbon", "radius": minor_radius}})
         viewer.setStyle({"resi": residue_list}, {"cartoon": {"color": "spectrum"},
@@ -84,6 +80,7 @@ def view_pose(pose=None, residue_selector=None, label=True, hbonds=True, disulfi
         if label:
             viewer.addResLabels({"resi": residue_list}, {"fontSize": 14, "showBackground": False, "fontColor": "black"})
     else:
+        minor_radius = 0.25
         viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "grayCarbon", "radius": minor_radius}})
 
     if hbonds:
