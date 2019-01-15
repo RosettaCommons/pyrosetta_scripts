@@ -54,18 +54,34 @@ def view_pdbs(pdb_filenames=None):
     return interact(view_py3Dmol, i=s_widget)
 
 
-def view_pose(pose=None, hbonds=True, residue_selector=None, label=False):
-    """View a PyRosetta ResidueSelector in a PyRosetta Pose object in py3Dmol within a Jupyter notebook.
-    Optionally also label the residues in the PyRosetta ResidueSelector or show all hydrogen bonds.
-    The user must have already initialized PyRosetta providing .params files for any ligands/non-canonical residues
-    in the pose.
+def view_pose(pose=None, residue_selector=None, label=True, hbonds=True, disulfides=True):
+    """View a PyRosetta Pose object in py3Dmol within a Jupyter notebook. Optionally, also view a PyRosetta ResidueSelector
+    with or without labeling the residues in the PyRosetta ResidueSelector, optionally show all hydrogen bonds, and 
+    optionally show all disulfide bonds. The user must have already initialized PyRosetta providing .params files for any
+    ligands/non-canonical residues in the pose.
     """
     if not isinstance(pose, pyrosetta.rosetta.core.pose.Pose):
         raise ValueError("Input pose should be an instance of pyrosetta.rosetta.core.pose.Pose")
-    
+
     viewer = py3Dmol.view(1200, 800)
     viewer.addModels(pyrosetta.distributed.io.to_pdbstring(pose), "pdb")
-    viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "blackCarbon", "radius": 0.025}})
+
+    major_radius = 0.5
+    minor_radius = 0.05
+
+    if residue_selector:
+        if not isinstance(residue_selector, pyrosetta.rosetta.core.select.residue_selector.ResidueSelector):
+            raise ValueError(
+                "Input residue_selector should be an instance of pyrosetta.rosetta.core.select.residue_selector.ResidueSelector"
+            )
+        residue_list = list(pyrosetta.rosetta.core.select.get_residues_from_subset(residue_selector.apply(pose))) 
+        viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "blackCarbon", "radius": minor_radius}})
+        viewer.setStyle({"resi": residue_list}, {"cartoon": {"color": "spectrum"},
+                         "stick": {"colorscheme": "whiteCarbon", "radius": major_radius}})
+        if label:
+            viewer.addResLabels({"resi": residue_list}, {"fontSize": 14, "showBackground": False, "fontColor": "black"})
+    else:
+        viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "grayCarbon", "radius": minor_radius}})
 
     if hbonds:
         hbond_set = pose.get_hbonds()
@@ -80,16 +96,18 @@ def view_pose(pose=None, hbonds=True, residue_selector=None, label=False):
                                     "start": {"x": don_xyz[0], "y": don_xyz[1], "z": don_xyz[2]},
                                     "end": {"x": acc_xyz[0], "y": acc_xyz[1], "z": acc_xyz[2]}})
 
-    if residue_selector:
-        if not isinstance(residue_selector, pyrosetta.rosetta.core.select.residue_selector.ResidueSelector):
-            raise ValueError(
-                "Input residue_selector should be an instance of pyrosetta.rosetta.core.select.residue_selector.ResidueSelector"
-            )   
-        residue_list = list(pyrosetta.rosetta.core.select.get_residues_from_subset(residue_selector.apply(pose))) 
-        viewer.setStyle({"resi": residue_list},
-                        {"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "whiteCarbon", "radius": 0.25}})  
-        if label:
-            viewer.addResLabels({"resi": residue_list}, {"fontSize": 12, "showBackground": False, "fontColor": "black"})
-    
+    if disulfides:
+        cys_res = []
+        for i, aa in enumerate(pose.sequence(), start=1):
+            if aa == "C":
+                cys_res.append(i)
+        for i in cys_res:
+            for j in cys_res:
+                if pyrosetta.rosetta.core.conformation.is_disulfide_bond(pose.conformation(), i, j):
+                    i_xyz = pose.xyz(pyrosetta.rosetta.core.id.AtomID(pose.residue(i).atom_index("SG"), i))
+                    j_xyz = pose.xyz(pyrosetta.rosetta.core.id.AtomID(pose.residue(j).atom_index("SG"), j))
+                    viewer.addCylinder({"radius": minor_radius, "color": "gold", "fromCap": True, "toCap": True,
+                                        "start": {"x": i_xyz[0], "y": i_xyz[1], "z": i_xyz[2]},
+                                        "end": {"x": j_xyz[0], "y": j_xyz[1], "z": j_xyz[2]}}) 
     viewer.zoomTo()
     return viewer.show()
