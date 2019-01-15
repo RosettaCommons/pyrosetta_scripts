@@ -81,7 +81,7 @@ def view_pose(pose=None, residue_selector=None, label=True, hbonds=True, disulfi
             viewer.addResLabels({"resi": residue_list}, {"fontSize": 14, "showBackground": False, "fontColor": "black"})
     else:
         minor_radius = 0.25
-        viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "grayCarbon", "radius": minor_radius}})
+        viewer.setStyle({"cartoon": {"color": "spectrum"}, "stick": {"colorscheme": "lightgreyCarbon", "radius": minor_radius}})
 
     if hbonds:
         hbond_set = pose.get_hbonds()
