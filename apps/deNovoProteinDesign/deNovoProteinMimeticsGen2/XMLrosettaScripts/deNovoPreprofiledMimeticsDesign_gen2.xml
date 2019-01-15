@@ -1,0 +1,206 @@
+<ROSETTASCRIPTS>
+    <SCOREFXNS>
+        <ScoreFunction name="SFXN6_vanilla" weights="beta" symmetric="0" />
+        <ScoreFunction name="SFXN6_vanilla_cst" weights="beta" symmetric="0" >
+            <Reweight scoretype="coordinate_constraint" weight="1.0"/>
+        </ScoreFunction >
+        <ScoreFunction name="SFXN6dA_norep_elect"   weights="beta" symmetric="0" >
+                <Reweight scoretype="fa_rep"  weight="0.05" />
+                <Reweight scoretype="fa_elec" weight="1.0" />
+        </ScoreFunction >
+        <ScoreFunction name="SFXN6dA_elect"   weights="beta" symmetric="0" >
+                <Reweight scoretype="fa_elec" weight="2.0" />
+        </ScoreFunction >
+    </SCOREFXNS>
+    
+    <MOVERS>
+        <SwitchChainOrder name="keep_only_chain_A" chain_order="1"/>
+    </MOVERS>
+    
+    <FILTERS>
+        <!--Generic-->
+        <ScoreType name="score_disabled" scorefxn="SFXN6_vanilla" score_type="total_score" threshold="0.0" confidence="0" />
+        <ResidueCount name="nres_disabled" confidence="0" />
+        <!--Not Enabled-->
+        <PackStat name="packstat_disabled" threshold="0.63" repeats="5" confidence="0" />
+        <SSPrediction name="sspred_disabled" cmd="/work/dadriano/PROGRAMS/psipred/runpsipred_single" use_probability="0" use_svm="0" threshold="0.80" confidence="0"/>
+        <BuriedUnsatHbonds name="unsat_core_disabled" residue_selector="coreLayerSelector" report_sc_heavy_atom_unsats="true" scorefxn="SFXN6_vanilla" cutoff="2" residue_surface_cutoff="20.0" ignore_surface_res="true" print_out_info_to_pdb="true" confidence="0"/>
+        <RmsdSimple name="rmsd_chainA_not_align_disabled" reference_name="reference_conformation" chain="1" align="0" threshold="2.7" confidence="0"/>
+        <RmsdSimple name="rmsd_chainA_align_disabled"     reference_name="reference_conformation" chain="1" align="1" threshold="2.2" confidence="0"/>
+        <CalculatorFilter name="score_res_disabled" equation="SCORE/NRES" threshold="-2.1" confidence="0">
+            <Var name="SCORE" filter_name="score_disabled" />
+            <Var name="NRES" filter_name="nres_disabled" />
+        </CalculatorFilter>
+        
+        <!--Enabled-->
+        <PackStat name="packstat_enabled" threshold="0.63" repeats="5" confidence="1" />
+        <SSPrediction name="sspred_enabled" cmd="/work/dadriano/PROGRAMS/psipred/runpsipred_single" use_probability="0" use_svm="0" threshold="0.80" confidence="1"/>
+        <CavityVolume name="cav_vol_disabled" />
+        <BuriedUnsatHbonds name="unsat_core_enabled" residue_selector="coreLayerSelector" report_sc_heavy_atom_unsats="true" scorefxn="SFXN6_vanilla" cutoff="2" residue_surface_cutoff="20.0" ignore_surface_res="true" print_out_info_to_pdb="true" confidence="1" />
+        <RmsdSimple name="rmsd_chainA_not_align_enabled" reference_name="reference_conformation" chain="1" align="0" threshold="2.7" confidence="1"/>
+        <RmsdSimple name="rmsd_chainA_align_enabled"     reference_name="reference_conformation" chain="1" align="1" threshold="2.2" confidence="1"/>
+        <CalculatorFilter name="score_res_enabled" equation="SCORE/NRES" threshold="-2.1" confidence="1">
+            <Var name="SCORE" filter_name="score_disabled" />
+            <Var name="NRES" filter_name="nres_disabled" />
+        </CalculatorFilter>
+        <CompoundStatement name="all_enabled_filters" >
+            <AND filter_name="sspred_enabled" />
+            <AND filter_name="score_res_enabled" />
+            <AND filter_name="packstat_enabled" />
+            <AND filter_name="unsat_core_enabled" />
+        </CompoundStatement>
+    </FILTERS>
+    
+    <FILTERS>
+        <!--Chain A Filters-->
+        <!--Not Enabled-->
+        <MoveBeforeFilter name="packstat_chainA_disabled" mover="keep_only_chain_A" filter="packstat_disabled" confidence="0"/>
+        <MoveBeforeFilter name="sspred_chainA_disabled" mover="keep_only_chain_A" filter="sspred_disabled" confidence="0"/>
+        <MoveBeforeFilter name="score_res_chainA_disabled" mover="keep_only_chain_A" filter="score_res_disabled" confidence="0"/>
+        <MoveBeforeFilter name="cav_vol_chainA_disabled" mover="keep_only_chain_A" filter="cav_vol_disabled" confidence="0"/>
+        <MoveBeforeFilter name="unsat_core_chainA_disabled" mover="keep_only_chain_A" filter="unsat_core_disabled" confidence="0"/>
+        <!--Enabled-->
+        <MoveBeforeFilter name="packstat_chainA_enabled" mover="keep_only_chain_A" filter="packstat_enabled" confidence="1"/>
+        <MoveBeforeFilter name="sspred_chainA_enabled" mover="keep_only_chain_A" filter="sspred_enabled" confidence="1"/>
+        <MoveBeforeFilter name="score_res_chainA_enabled" mover="keep_only_chain_A" filter="score_res_enabled" confidence="1"/>
+        <MoveBeforeFilter name="all_enabled_filters_chainA" mover="keep_only_chain_A" filter="all_enabled_filters" confidence="1"/>
+        <MoveBeforeFilter name="unsat_core_chainA_enabled" mover="keep_only_chain_A" filter="unsat_core_enabled" confidence="1"/>
+    </FILTERS>
+    
+    <RESIDUE_SELECTORS>
+        <ResiduePDBInfoHasLabel name="hotspots" property="HOTSPOT" />
+        <Layer name="surfaceLayerSelector" select_core="0" select_boundary="0" select_surface="1"
+                ball_radius="2.0" use_sidechain_neighbors="1"
+                sc_neighbor_dist_exponent="1.0" sc_neighbor_dist_midpoint="9.0"
+                sc_neighbor_denominator="1.0" sc_neighbor_angle_shift_factor="0.5"
+                sc_neighbor_angle_exponent="2.0"
+                core_cutoff="5.2" surface_cutoff="1.0"
+        />
+        <Layer name="coreLayerSelector" select_core="1" select_boundary="0" select_surface="0"
+                ball_radius="2.0" use_sidechain_neighbors="1"
+                sc_neighbor_dist_exponent="1.0" sc_neighbor_dist_midpoint="9.0"
+                sc_neighbor_denominator="1.0" sc_neighbor_angle_shift_factor="0.5"
+                sc_neighbor_angle_exponent="2.0"
+                core_cutoff="5.2" surface_cutoff="1.0"
+        />
+    </RESIDUE_SELECTORS>
+
+    <TASKOPERATIONS>
+        <InitializeFromCommandline name="init"/>
+        <IncludeCurrent name="inclcur"/>
+        <LimitAromaChi2 name="limitchi2" />
+        <DisallowIfNonnative name="only_native_H" disallow_aas="H"/>
+        <ReadResfile name="resfile" filename="%%resfile_name%%" />
+        <PreventChainFromRepacking name="not_chain_B" chain="2" />
+        <PreventChainFromRepacking name="not_chain_C" chain="3" />
+        PreventChainFromRepacking name="not_chain_D" chain="4" />
+        <!--Select designable residues by sasa and packable by flag-->
+        <SelectBySASA name="only_core_residues" mode="mc" probe_radius="2.0" core_asa="20.0" surface_asa="30.0" core="1" boundary="0" surface="0" verbose="1" />
+        <!--Restrict Hotspots to Repacking-->
+        <OperateOnResidueSubset name="hotspot_onlyrepack" selector="hotspots" >
+            <RestrictToRepackingRLT/>
+        </OperateOnResidueSubset>
+        <!--Helps to correct/rermove TRP in the surface-->
+        <OperateOnResidueSubset name="surfaceWcorrector" selector="surfaceLayerSelector" >
+           <RestrictAbsentCanonicalAASRLT aas="ACDEFGHIKLMNPQRSTVY"/>
+        </OperateOnResidueSubset>
+    </TASKOPERATIONS>
+    
+    <MOVERS>
+        <SavePoseMover name="save_RMSDreference_conformation"  reference_name="reference_conformation"/>
+        <SavePDBInfoMover name="saveInitPDBinfo"   reference_info_name="initPDBinfo" restore_info="0" />
+        <SavePDBInfoMover name="reloadInitPDBinfo" reference_info_name="initPDBinfo" restore_info="1" />
+        <AddConstraintsToCurrentConformationMover name="constrainCA"  task_operations="init" CA_only="1" cst_weight="1.0" />
+        <ClearConstraintsMover name="clearAllConstraints" />
+        <PackRotamersMover name="design_all_norep" scorefxn="SFXN6dA_norep_elect"      task_operations="init,resfile,inclcur,limitchi2,surfaceWcorrector,only_native_H,hotspot_onlyrepack,not_chain_B,not_chain_C" />
+        <PackRotamersMover name="design_onlyCore_norep" scorefxn="SFXN6dA_norep_elect" task_operations="init,resfile,inclcur,limitchi2,surfaceWcorrector,only_native_H,hotspot_onlyrepack,only_core_residues,not_chain_B,not_chain_C" />
+        <TaskAwareMinMover name="min_vanilla_SC"  scorefxn="SFXN6_vanilla"  bb="0" chi="1" jump="0" task_operations="init,resfile,inclcur,limitchi2,surfaceWcorrector,only_native_H,hotspot_onlyrepack,not_chain_B,not_chain_C" />
+        <TaskAwareMinMover name="min_vanilla_BBSC"  scorefxn="SFXN6_vanilla_cst"  bb="1" chi="1" jump="0" task_operations="init,resfile,inclcur,limitchi2,surfaceWcorrector,only_native_H,hotspot_onlyrepack,not_chain_B,not_chain_C" />
+        <FastDesign name="fdesign_vanilla" scorefxn="SFXN6_vanilla"   task_operations="init,resfile,inclcur,limitchi2,surfaceWcorrector,only_native_H,hotspot_onlyrepack,not_chain_B,not_chain_C"  repeats="3"  clear_designable_residues="0" >
+            <MoveMap name="mappyfd">
+                <Chain number="1" chi="1" bb="1"/>
+                <Chain number="2" chi="0" bb="0"/>
+                <Chain number="3" chi="0" bb="0"/>
+                Chain number="4" chi="0" bb="0"/>
+                <Jump number="1" setting="0"/>
+            </MoveMap>
+        </FastDesign>
+        <FastRelax name="fast_relax_vanilla" scorefxn="SFXN6_vanilla" task_operations="init,resfile,inclcur,limitchi2,surfaceWcorrector,only_native_H,hotspot_onlyrepack,not_chain_B,not_chain_C"  repeats="3" >
+            <MoveMap name="mappyfr">
+                <Chain number="1" chi="1" bb="1"/>
+                <Chain number="2" chi="0" bb="0"/>
+                <Chain number="3" chi="0" bb="0"/>
+                Chain number="4" chi="0" bb="0"/>
+                <Jump number="1" setting="0"/>
+            </MoveMap>
+        </FastRelax>
+        <ParsedProtocol name="reloadHS_and_design_onlyCore_norep" >
+            <Add mover_name="reloadInitPDBinfo" />
+            <Add mover_name="design_onlyCore_norep" />
+        </ParsedProtocol>
+        <ParsedProtocol name="reloadHS_and_quickdesign_all_w_minimize_vanilla" >
+            <Add mover_name="reloadInitPDBinfo" />
+            <Add mover_name="design_all_norep" /> 
+            <Add mover_name="min_vanilla_SC" /> 
+            <Add mover_name="constrainCA" /> <!-- START CA-contraints -->
+            <Add mover_name="min_vanilla_BBSC" /> 
+            <Add mover_name="clearAllConstraints" /> <!-- END CA-contraints -->
+        </ParsedProtocol>
+	<ParsedProtocol name="reloadHS_and_fastDesign" >
+            <Add mover_name="reloadInitPDBinfo" />
+            <Add mover_name="fdesign_vanilla" />
+        </ParsedProtocol>
+        <GenericSimulatedAnnealer name="SA_DesignProtein"
+            mover_name="reloadHS_and_design_onlyCore_norep" trials="100"
+            periodic_mover="reloadHS_and_quickdesign_all_w_minimize_vanilla" eval_period="20" history="10" 
+            bolz_rank="1" recover_low="1" preapply="0" drift="1" 
+            checkpoint_file="mc" keep_checkpoint_file="0"
+            filter_name="cav_vol_chainA_disabled" temperature="1.5" sample_type="low"
+            stopping_condition="all_enabled_filters_chainA" > 
+            <Filters>
+                <AND filter_name="unsat_core_chainA_disabled" sample_type="low" temperature="0.05" />
+                <AND filter_name="score_res_chainA_disabled" sample_type="low" temperature="0.05" />
+            </Filters>
+        </GenericSimulatedAnnealer>
+        <!-- Fastdesign GMC, increase trials if you wanna more through designs, but it will take much longer -->
+        <GenericMonteCarlo name="MC_FastDesignProtein" 
+            mover_name="reloadHS_and_fastDesign"
+            filter_name="cav_vol_chainA_disabled"
+            sample_type="low"
+            trials="2" preapply="0"
+            stopping_condition="all_enabled_filters_chainA" >
+            <Filters>
+                <AND filter_name="unsat_core_chainA_disabled" sample_type="low"  />
+                <AND filter_name="score_res_chainA_disabled"  sample_type="low" />
+            </Filters>
+        </GenericMonteCarlo>
+    </MOVERS>
+    
+    <APPLY_TO_POSE>
+    </APPLY_TO_POSE>
+    
+    <PROTOCOLS>
+        <Add mover_name="saveInitPDBinfo" />
+        <Add mover_name="save_RMSDreference_conformation" />
+        <Add mover_name="SA_DesignProtein" />
+        <Add  filter_name="rmsd_chainA_not_align_enabled" />
+        <Add  filter_name="rmsd_chainA_align_enabled" />
+        <Add mover_name="MC_FastDesignProtein" />
+        <Add  filter_name="rmsd_chainA_not_align_enabled" />
+        <Add  filter_name="rmsd_chainA_align_enabled" />
+        <Add mover_name="SA_DesignProtein" />
+        <Add  filter_name="rmsd_chainA_not_align_enabled" />
+        <Add  filter_name="rmsd_chainA_align_enabled" />
+        <Add mover_name="MC_FastDesignProtein" />
+        <Add  filter_name="rmsd_chainA_not_align_enabled" />
+        <Add  filter_name="rmsd_chainA_align_enabled" />
+        <Add mover_name="fast_relax_vanilla" />
+        <Add  filter_name="rmsd_chainA_not_align_enabled" />
+        <Add  filter_name="rmsd_chainA_align_enabled" />
+        <Add filter_name="score_res_chainA_enabled" />
+        <Add filter_name="sspred_chainA_enabled" />
+        <Add filter_name="packstat_chainA_enabled" />
+        <Add filter_name="unsat_core_chainA_enabled" />
+        <Add filter_name="cav_vol_chainA_disabled" />
+    </PROTOCOLS>
+</ROSETTASCRIPTS>
