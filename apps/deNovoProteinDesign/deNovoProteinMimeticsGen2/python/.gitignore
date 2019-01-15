@@ -1,0 +1,6 @@
+# Ignore ll
+*
+
+#But:
+!.gitignore
+!*.py
