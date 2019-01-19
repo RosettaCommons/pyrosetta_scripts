@@ -1,3 +1,7 @@
+# Ignore files
 .cache/
 *.pyc
 .DS_store
+
+# Ignore folders
+dask-worker-space
