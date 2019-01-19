@@ -1,2 +1,7 @@
+# Ignore files
 .DS_Store
-*.ipynb
+*.pyc
+
+# Ignore folders
+dask-worker-space/
+.ipynb_checkpoints/
