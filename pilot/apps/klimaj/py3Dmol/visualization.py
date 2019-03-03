@@ -222,4 +222,4 @@ def view_pose(pose=None, residue_selector=None, labels=True,
     
     viewer.zoomTo()
 
-return viewer.show()
+    return viewer.show()
