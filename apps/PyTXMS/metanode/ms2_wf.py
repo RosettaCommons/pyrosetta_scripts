@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import re
 import glob
@@ -12,23 +13,14 @@ from applicake.coreutils.keys import Keys, KeyHelp
 from applicake.coreutils.info import get_handler
 
 
-class metanode_cheetah_wf(WrappedApp):
+class metanode_ms2_wf(WrappedApp):
     """ metanode """
 
     def add_args(self):
         return [
-            Argument('ms1_datasets', 'ms1_datasets'), ## ms1 mzml file
-            Argument('ms2_datasets', 'ms2_datasets'), ## ms2 mzml file
-            Argument('java', 'java'),
-            Argument('dinosaur_jar', 'dinosaur_jar'),
-            Argument('taxlink_jar', 'taxlink_jar'),
-            Argument('train_datasets', 'train_datasets'),
-            Argument('ensemble', 'ensemble'),
-            Argument('pdb_datasets', 'pdb_datasets'),
-            Argument('cut_off', 'cut_off'),
-            Argument('num_of_models', 'num_of_models'),
-            Argument('num_of_top_filters', 'num_of_top_filters'),
-            Argument('kfold', 'kfold'),
+            Argument('sequence1', 'sequence1'),
+            Argument('sequence2', 'sequence2'),
+            Argument('datasets', 'datasets'), ## ms2 mzml file
             Argument('delta', 'delta'),
             Argument('intensity', 'intensity'),
             Argument('msconvert_executable', 'msconvert_executable'),
@@ -38,28 +30,16 @@ class metanode_cheetah_wf(WrappedApp):
     def run(self, log, info):
         wd = os.getcwd()
 
-        ## running seq2xl to make a list of potential XLs from input seqs
-        self._dr('pdb_tools.single_chain',info['INPUT'],'vars.ini',wd,[])
-        # self._dr('pdb_tools.cp_notebook','vars.ini','vars.ini',wd,[])
+        ## (1) ## running the seq2xl_app to make a full XL set in kojak format
+
+        self._dr('openbis.dss_simple',info['INPUT'],'vars.ini',wd,[])
         self._dr('seq2xl.seq2xl_app','vars.ini','vars.ini',wd,[])
 
-        ## running ML based hrms1 analysis to find potential binding interfaces
-        self._dr('dinosaur.dinosaur','vars.ini','vars.ini',wd,[])
-        self._dr('taxlink.taxlink','vars.ini','vars.ini',wd,[])
-        self._dr('hrms1.hrms1','vars.ini','vars.ini',wd,[])
+        #self._dr('seq2xl.seq2xl_app',info['INPUT'],'vars.ini',wd,[])
 
-        ## running cheetah modeling on the input structure with potential BIs
-        self._dr('cheetah.modeling_run','vars.ini','vars.ini',wd,[])
-
-        ## validating the top model's XLs with ms2 analysis
+        ## (2) ## running ms2
         self._dr('ms2.msconvert','vars.ini','vars.ini',wd,[])
         self._dr('ms2.ms2','vars.ini','vars.ini',wd,[])
-
-        ## making a pymol session with all the information
-        self._dr('cheetah.pymol_run','vars.ini','vars.ini',wd,[])
-
-        ## providing the information to the dropbox and making a report
-        # self._dr('cheetah.make_report','vars.ini','vars.ini',wd,[])
 
         return info
 
@@ -88,6 +68,4 @@ class metanode_cheetah_wf(WrappedApp):
             raise Exception('Could not run app [%s]: %s' % (appliapp, str(e)))
 
 if __name__ == "__main__":
-    metanode_cheetah_wf.main()
-
-
+    metanode_ms2_wf.main()

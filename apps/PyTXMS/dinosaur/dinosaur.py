@@ -30,7 +30,7 @@ class dinosaur(WrappedApp):
         #         mzmlfiles = glob.glob("%s/%s/*.mzML*"%(info['DATASET_DIR'],mzml))
         #         print("Found %s in %s"%(mzmlfiles,mzml))
         #     dinosaur_file = mzmlfiles[0]
-        mzml_files = glob.glob("%s/%s/*.mzML*"%(info['DATASET_DIR'],info['ms1_datasets']))
+        mzml_files = glob.glob("%s/%s"%(info['DATASET_DIR'],info['ms1_datasets']))
         dinosaur_file = mzml_files[0]
         ##
         

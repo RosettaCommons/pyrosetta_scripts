@@ -1,0 +1,19 @@
+pdb name: .     nstruct: 1
+filename: ._0.pdb total_score: -102.0  interchain_pair:     0.300 interchain_vdw:     0.070 interchain_env:   -82.368 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -126.66  interchain_pair:    -1.597 interchain_vdw:     0.000 interchain_env:  -105.062 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -128.91  interchain_pair:    -0.218 interchain_vdw:     0.092 interchain_env:  -123.788 interchain_contact:    -5.000
+filename: ._0.pdb total_score: -151.0  interchain_pair:    -0.166 interchain_vdw:     0.000 interchain_env:  -130.830 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -129.76  interchain_pair:    -0.043 interchain_vdw:     0.513 interchain_env:  -110.231 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -152.39  interchain_pair:    -0.923 interchain_vdw:     0.000 interchain_env:  -131.471 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -102.67  interchain_pair:    -0.517 interchain_vdw:     0.000 interchain_env:  -106.153 interchain_contact:     4.000
+filename: ._0.pdb total_score: -138.4  interchain_pair:     1.111 interchain_vdw:     0.254 interchain_env:  -119.769 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -118.99  interchain_pair:    -1.203 interchain_vdw:     0.000 interchain_env:   -97.786 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -132.2  interchain_pair:    -1.533 interchain_vdw:     0.000 interchain_env:  -110.670 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -130.68  interchain_pair:     0.840 interchain_vdw:     0.004 interchain_env:  -111.528 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -123.99  interchain_pair:    -1.939 interchain_vdw:     0.022 interchain_env:  -111.072 interchain_contact:   -11.000
+filename: ._0.pdb total_score: -132.12  interchain_pair:     1.649 interchain_vdw:     1.970 interchain_env:  -120.738 interchain_contact:   -15.000
+filename: ._0.pdb total_score: -127.69  interchain_pair:     1.281 interchain_vdw:     2.320 interchain_env:  -112.293 interchain_contact:   -19.000
+filename: ._0.pdb total_score: -138.28  interchain_pair:     0.447 interchain_vdw:     0.576 interchain_env:  -119.305 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -147.22  interchain_pair:    -0.517 interchain_vdw:     0.000 interchain_env:  -126.703 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -120.64  interchain_pair:     0.004 interchain_vdw:     0.000 interchain_env:  -100.642 interchain_contact:   -20.000
+filename: ._0.pdb total_score: -133.04  interchain_pair:     2.449 interchain_vdw:     1.892 interchain_env:  -117.385 interchain_contact:   -20.000

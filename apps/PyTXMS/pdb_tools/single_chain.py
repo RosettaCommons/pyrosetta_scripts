@@ -46,8 +46,7 @@ class single_chain(BasicApp):
         pdb_files = []
         if 'pdb_datasets' in info:
             for pds in info['pdb_datasets']:
-                # files = glob.glob("%s"%(pds)) ## for test without dss_simple
-                files = glob.glob("%s/%s/*.pdb"%(info['DATASET_DIR'],pds))
+                files = glob.glob("%s"%(pds)) ## without dss_simple
                 print("Found %s in %s"%(files,pds))
                 pdb_files.append(files[0])
 

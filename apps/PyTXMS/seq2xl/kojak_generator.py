@@ -17,24 +17,24 @@ def kojak_generator (sequence, pos):
     if sequence[pos] == 'K':
         pos_temp1=0
         pos_temp2=0
-
+        
         for cnt1 in range(pos-1, -1, -1):
             if (sequence[cnt1] == 'K') or (sequence[cnt1] == 'R'):
                 pos_temp1 = cnt1 + 1
                 break
             else:
                 pos_temp1 = 0
-
+        
         for cnt2 in range(pos+1, len(sequence), +1):
             if (sequence[cnt2] == 'K') or (sequence[cnt2] == 'R'):
                 pos_temp2 = cnt2 + 1
                 break
             else:
                 pos_temp2 = len(sequence)
-
+         
         xlink = sequence[pos_temp1:pos_temp2]
         pos_on_pep = pos - pos_temp1 + 1
     else:
         print "ERROR"
-
+    
     return xlink , pos_on_pep

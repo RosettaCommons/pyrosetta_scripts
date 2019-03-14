@@ -43,7 +43,7 @@ class hrms1(BasicApp):
 
         print "Downloading the training file ..."
 	##
-        training_files = glob.glob("%s/%s/*.csv"%(info['DATASET_DIR'],info['train_datasets']))
+        training_files = glob.glob("%s/%s"%(info['DATASET_DIR'],info['train_datasets']))
 	print training_files
         training_set = training_files[0]
         ##

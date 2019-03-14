@@ -24,27 +24,37 @@ class seq2xl(BasicApp):
 
     def add_args(self):
         return [
-            Argument('single_chain_seqs', 'single_chain_seqs'),
+            Argument('sequence1', 'sequence1'),
+            Argument('sequence2', 'sequence2'),
+            Argument('seq_datasets', 'seq_datasets'),
+            #Argument('mzml_datasets', 'mzml_datasets'),
             Argument('DATASET_DIR', 'DATASET_DIR'),
+            Argument('to_dropbox', 'to_dropbox'),
             Argument(Keys.WORKDIR, KeyHelp.WORKDIR),
         ]
 
     def run(self, log, info):
         wd = info['WORKDIR']
         seqfiles = []
+        if not 'to_dropbox' in info:
+            info['to_dropbox'] = []
         if not 'java' in info:
             info['java'] = 'java'
         if not 'dinosaur_jar' in info:
             info['dinosaur_jar'] = '/dinosaur/target/Dinosaur-1.1.3.free.jar'
-        
-        if 'single_chain_seqs' in info:
-            for sds in info['single_chain_seqs']:
-                seqfiles.append(sds)
+        #mzml_files = glob.glob("%s/%s/*.mzML.gz"%(info['DATASET_DIR'],info['mzml_datasets']))
+        #info['MZML'] = mzml_files[0]
+        if 'seq_datasets' in info:
+            for sds in info['seq_datasets']:
+                files = glob.glob("%s/%s/*.txt"%(info['DATASET_DIR'],sds))
+                print("Found %s in %s"%(files,sds))
+                seqfiles.append(files[0])
             seq1_file = seqfiles[0]
             seq2_file = seqfiles[1]
             print(seq1_file,seq2_file)
         else:
-            print ("ERROR! no seq file found.")
+            seq1_file = info['sequence1']
+            seq2_file = info['sequence2']
 
         PEP_LEN = 4
 	seqlist1 = []
@@ -86,6 +96,9 @@ class seq2xl(BasicApp):
 
         info['kojak_xl_file'] = 'ALL_XL.txt'
         info['xlink_f'] = 'ALL_XL.txt'
+        ## send to dropbox
+        info['to_dropbox'].append(seq1_file)
+        info['to_dropbox'].append(seq2_file)
         return info
 
 if __name__ == "__main__":

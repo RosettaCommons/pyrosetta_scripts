@@ -24,7 +24,7 @@ class msconvert(WrappedApp):
         wd = info[Keys.WORKDIR]
 
         ##
-        mzml_files = glob.glob("%s/%s/*.mzML*"%(info['DATASET_DIR'],info['ms2_datasets']))
+        mzml_files = glob.glob("%s/%s"%(info['DATASET_DIR'],info['ms2_datasets']))
         msconvert_file = mzml_files[0]
         ##
 
