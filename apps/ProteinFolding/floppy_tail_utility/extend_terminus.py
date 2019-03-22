@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#
 # (c) Copyright Rosetta Commons Member Institutions.
 # (c) This file is part of the Rosetta software suite and is made available under license.
 # (c) The Rosetta software is developed by the contributing members of the Rosetta Commons.
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     task = rosetta.core.pack.task.TaskFactory.create_packer_task(pose)
     task.restrict_to_repacking()
 
-    pack_rotamers = rosetta.protocols.simple_moves.PackRotamersMover(sfxn, task)
+    pack_rotamers = rosetta.protocols.minimization_packing.PackRotamersMover(sfxn, task)
     pack_rotamers.apply(pose)
 
     if args.outfile:

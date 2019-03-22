@@ -1,0 +1,11 @@
+#better documentation written by the people who made these scripts should go here
+#This README file was made by Alex Payne, a research assistant in Brian Kuhlman's lab.
+#Alex is also responsible for copying this directory from /Rosetta/main/source/scripts/PyRosetta/public/floppy_tail_utility
+#Feel free to improve the documentation and remove my name completely.
+#but for the time being:
+
+These are scripts intended to be used in conjunction with FloppyTail.
+
+FloppyTail is a Rosetta application written by Steven Lewis.
+It was intended to be used to model 'floppy' termini and loops in crystal structures with missing density.
+These PyRosetta scripts are intended to make it easier to use FloppyTail.
