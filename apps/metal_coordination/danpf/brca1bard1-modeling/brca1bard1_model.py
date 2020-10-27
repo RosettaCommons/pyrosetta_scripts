@@ -2,6 +2,12 @@
 """
 usage:
     python brca1bard1_model.py 1
+
+cite:
+
+BRCA1/BARD1 site-specific ubiquitylation of nucleosomal H2A is directed by BARD1.
+Sam Witus, Anika Burrell, Daniel Farrell, Jianming Khang, Meiling Wang, Jesse Hansen, Alex Pravat, Lisa Tuttle, Peter Brzovic, Champak Chatterjee, Weixing Zhao, Frank DiMaio, Justin Kollman, and Rachel Klevit
+
 """
 
 import sys
