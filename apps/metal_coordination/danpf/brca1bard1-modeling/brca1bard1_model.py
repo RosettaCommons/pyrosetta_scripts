@@ -203,11 +203,13 @@ def setup_zn_coordination_centers(pose):
 
     less_than_3_fn = rosetta.core.scoring.func.FlatHarmonicFunc(0, 0.1, 2.9)
     # Salt bridge 01
+    nz_70 = pose.pdb_info().pdb2pose("A", 70)
     nz_71 = rosetta.core.id.AtomID(
-        pose.residue(71).atom_index(" NZ "), 71
+        pose.residue(nz_70).atom_index(" NZ "), nz_70
     )
+    n64 = pose.pdb_info().pdb2pose("N", 64)
     oe1_409 = rosetta.core.id.AtomID(
-        pose.residue(409).atom_index(" OE1"), 409
+        pose.residue(n64).atom_index(" OE1"), n64
     )
     cst = rosetta.core.scoring.constraints.AtomPairConstraint(
         nz_71, oe1_409, less_than_3_fn
@@ -216,55 +218,65 @@ def setup_zn_coordination_centers(pose):
 
     # Salt bridge 02
     less_than_3_fn2 = rosetta.core.scoring.func.FlatHarmonicFunc(0, 0.1, 3.0)
+    o105 = pose.pdb_info().pdb2pose("O", 105)
     nh1_722 = rosetta.core.id.AtomID(
-        pose.residue(437).atom_index(" OE2"), 437
+        pose.residue(o105).atom_index(" OE2"), o105
     )
+    a38 = pose.pdb_info().pdb2pose("A", 38)
     oe2_4372 = rosetta.core.id.AtomID(
-        pose.residue(538).atom_index(" N  "), 538
+        pose.residue(a38).atom_index(" N  "), a38
     )
     cst2 = rosetta.core.scoring.constraints.AtomPairConstraint(
         nh1_722, oe2_4372, less_than_3_fn2
     )
     cst_set.add_constraint(cst2)
+
     # Salt bridge 03
     less_than_3_fn2 = rosetta.core.scoring.func.FlatHarmonicFunc(0, 0.1, 2.9)
-    oe2_437 = rosetta.core.id.AtomID(
-        pose.residue(437).atom_index(" OE2"), 437
+    n92 = pose.pdb_info().pdb2pose("N", 92)
+    oe2_n92 = rosetta.core.id.AtomID(
+        pose.residue(n92).atom_index(" OE1"), n92
     )
+
+    a71 = pose.pdb_info().pdb2pose("A", 71)
     nh1_72 = rosetta.core.id.AtomID(
-        pose.residue(72).atom_index(" NH1"), 72
+        pose.residue(a71).atom_index(" NH1"), a71
     )
     cst3 = rosetta.core.scoring.constraints.AtomPairConstraint(
-        oe2_437, nh1_72, less_than_3_fn2
+        oe2_n92, nh1_72, less_than_3_fn2
     )
     cst_set.add_constraint(cst3)
 
     # Salt bridge 04
     less_than_32_fn2 = rosetta.core.scoring.func.FlatHarmonicFunc(0, 0.1, 3.0)
-    nz_39 = rosetta.core.id.AtomID(
-        pose.residue(39).atom_index(" NZ "), 39
+    o105 = pose.pdb_info().pdb2pose("O", 105)
+    nz_o105 = rosetta.core.id.AtomID(
+        pose.residue(o105).atom_index(" NZ "), o105
     )
-    oe1_538 = rosetta.core.id.AtomID(
-        pose.residue(538).atom_index(" OE2"), 538
+    a38 = pose.pdb_info().pdb2pose("A", 38)
+    oe1_a38 = rosetta.core.id.AtomID(
+        pose.residue(a38).atom_index(" OE2"), a38
     )
     cst4 = rosetta.core.scoring.constraints.AtomPairConstraint(
-        nz_39, oe1_538, less_than_32_fn2
+        nz_o105, oe1_a38, less_than_32_fn2
     )
     cst_set.add_constraint(cst4)
 
     # Setting angles properly
     angle_170 = rosetta.core.scoring.func.CircularHarmonicFunc(2.96706, 0.1)
-    oe2_437 = rosetta.core.id.AtomID(
-        pose.residue(437).atom_index(" OE2"), 437
+    n92 = pose.pdb_info().pdb2pose("N", 92)
+    oe2_n92 = rosetta.core.id.AtomID(
+        pose.residue(n92).atom_index(" OE2"), n92
     )
-    N_538 = rosetta.core.id.AtomID(
-        pose.residue(538).atom_index(" N  "), 538
+    o105 = pose.pdb_info().pdb2pose("O", 105)
+    N_o105 = rosetta.core.id.AtomID(
+        pose.residue(o105).atom_index(" N  "), o105
     )
-    H_538 = rosetta.core.id.AtomID(
-        pose.residue(538).atom_index(" H  "), 538
+    H_o105 = rosetta.core.id.AtomID(
+        pose.residue(o105).atom_index(" H  "), o105
     )
     cst_ang = rosetta.core.scoring.constraints.AngleConstraint(
-        N_538, H_538, oe2_437, angle_170
+        N_o105, H_o105, oe2_n92, angle_170
     )
     cst_set.add_constraint(cst_ang)
 
