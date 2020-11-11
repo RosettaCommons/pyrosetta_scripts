@@ -251,11 +251,11 @@ def setup_zn_coordination_centers(pose):
     less_than_32_fn2 = rosetta.core.scoring.func.FlatHarmonicFunc(0, 0.1, 3.0)
     o105 = pose.pdb_info().pdb2pose("O", 105)
     nz_o105 = rosetta.core.id.AtomID(
-        pose.residue(o105).atom_index(" NZ "), o105
+        pose.residue(o105).atom_index(" OE2"), o105
     )
     a38 = pose.pdb_info().pdb2pose("A", 38)
     oe1_a38 = rosetta.core.id.AtomID(
-        pose.residue(a38).atom_index(" OE2"), a38
+        pose.residue(a38).atom_index(" NZ "), a38
     )
     cst4 = rosetta.core.scoring.constraints.AtomPairConstraint(
         nz_o105, oe1_a38, less_than_32_fn2
@@ -360,7 +360,6 @@ def main():
     lr_cart.set_sfxn(cart_sfxn)
     lr_cart.set_max_iter(200)
     lr_cart.set_ncyc(4)
-    lr_cart.cartesian(True)
 
     # initial packing
     tf = standard_task_factory()
