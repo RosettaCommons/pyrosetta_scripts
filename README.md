@@ -1,9 +1,7 @@
-#PyRosettaScripts   
-#Authors: All members of the RosettaCommons  
-#Date: 28/Apr/2017    
-#Description: Transient repository for python scripts that use pyrosetta  
+# PyRosettaScripts   
 
-***DO NOT FORK THIS REPOSITORY***
+Authors: All members of the RosettaCommons  
+Description: Repository for Python scripts that use PyRosetta  
   
 This is an early experiment, everything has to be figured out yet.  
   
