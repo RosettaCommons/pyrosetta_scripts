@@ -22,9 +22,30 @@ print(f"Original score: {myscore}")
 # 5. Create Monte Carlo Protocol to Optimize Pose
 
 # C. Initialize a MonteCarloObject and loop over residues
-mymc = rosetta.protocols.moves.MonteCarlo(mypose, sfxn, 0.5)
+mymc = rosetta.protocols.moves.MonteCarlo(mypose, sfxn, 100)
 
-for ii in range(1000):
+# 7. MoveMap stuff 
+mm = rosetta.core.kinematics.MoveMap()
+mm.set_chi(True)
+mm.set_bb(True)
+
+min_opts = rosetta.core.optimization.MinimizerOptions("lbfgs_armijo_atol", 0.01, True)
+minimizer = rosetta.core.optimization.AtomTreeMinimizer()
+
+# 7 Packing and Minimizing
+# Packing
+tf = rosetta.core.pack.task.TaskFactory()
+task = tf.create_task_and_apply_taskoperations(mypose)
+task.restrict_to_repacking()
+rosetta.core.pack.pack_rotamers(mypose, sfxn, task)
+
+minimizer.run(mypose, mm, sfxn, min_opts)
+
+# 6 PyMOL
+the_observer = rosetta.protocols.moves.PyMOLObserver()
+the_observer.pymol().apply(mypose)
+
+for ii in range(100):
 
     # A. get your random residue and random perturbations
     myres = np.random.randint(1, mypose.total_residue()+1)
@@ -43,10 +64,15 @@ for ii in range(1000):
         print(f"Residue {myres} is not an amino acid")
         pass
     
+    rosetta.core.pack.pack_rotamers(mypose, sfxn, task)
+    minimizer.run(mypose, mm, sfxn, min_opts)
+
     mymc.boltzmann(mypose)
+    the_observer.pymol().apply(mypose)
 
 
 print(mymc.last_accept())
 final_pose = mymc.lowest_score_pose()
 final_score = mymc.lowest_score()
 print(f"Final Score: {final_score}")
+final_pose.dump_pdb(f"optimized_{args.structure}")
