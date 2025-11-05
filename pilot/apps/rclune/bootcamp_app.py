@@ -66,6 +66,21 @@ def get_edges(ss_string):
 
 
     for ii in range(len(ss_elements)-1): 
+        # NOTE: This code may have an issue if two ss structure
+        # elements are directly next to each other (no spaces in
+        # between)
+        # Yeah, it tries to recreate an edge that already exists. 
+        # Not worth fixing in this lab IMO, just note its an issue
+        # probably need to add a condition about whether or not it's
+        # in a ss element or not
+
+        # Or I could change everything so that the ss_elements is just
+        # an array, instead of an array of tuples, add 1 to the front
+        # and the length of the structure to the end and then loop
+        # over each pair of numbers instead of each ss element. 
+        # Would need to figure out how to treat the jump edges 
+        # appropriately
+
         # I treat the last secondary structure element separately 
         # because it has a different end than the rest and no jump
         # points based on how I set everything up
@@ -76,8 +91,10 @@ def get_edges(ss_string):
         # edge, in which case end needs to be the same as the number
         # of residues, or the length of the string from DSSP
 
-        # peptide edge pointing towards the N terminus (<-)
-        # midpoint is in 
+        # See image in Lab 4, it will help clarify this
+
+        # peptide edge pointing towards the N terminus (<-) 
+        # midpoint is in a region that has a ss element
         midpoint1 = (ss_elements[ii][0] + ss_elements[ii][1]) // 2
         edges.append((midpoint1, start, -1))
         # peptide_edge pointing towards the C terminus (->)
@@ -85,14 +102,16 @@ def get_edges(ss_string):
         
 
         start = ss_elements[ii][1] + 1 # update the start 
+        # this midpoint is in a region that does not have an ss element
         midpoint2 = (ss_elements[ii][1] + ss_elements[ii+1][0])//2
 
         # jump_edge
         edges.append((midpoint0, midpoint2, jump_num))
         jump_num += 1 # update jump numbering
 
-        # peptide_edge pointing towards the C terminus (->)
+        # peptide edge pointing towards the N terminus (<-)
         edges.append((midpoint2, start, -1))
+        # peptide edge pointing towards the C terminus (->)
         edges.append((midpoint2, ss_elements[ii+1][0]-1, -1))
 
         # jump edge (had to do this here instead of waiting for the next
