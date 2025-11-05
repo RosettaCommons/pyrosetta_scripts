@@ -1,6 +1,6 @@
 import sys
 import argparse
-from pyrosetta import*
+from pyrosetta import *
 import numpy as np
 
 # Lab 4
