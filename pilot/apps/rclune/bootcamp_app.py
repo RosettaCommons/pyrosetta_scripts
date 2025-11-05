@@ -21,7 +21,6 @@ def identify_secondary_structure_spans(ss):
 
     elements = []
     start = None
-    print(len(ss))
 
     # Rosetta starts counting at 1, sigh
     for ii in range(1, len(ss)+1):
@@ -53,6 +52,7 @@ def get_edges(ss_string):
     midpoint0 = (ss_elements[0][0] + ss_elements[0][1])//2
     midpoint1 = None
     midpoint2 = None
+    jump_num = 1
     
     #all_vals = []
     #for element in ss_elements: 
@@ -67,13 +67,15 @@ def get_edges(ss_string):
         start = ss_elements[ii][1] + 1
         midpoint2 = (ss_elements[ii][1] + ss_elements[ii+1][0])//2
         # jump_edge
-        edges.append((midpoint0, midpoint2, 1))
+        edges.append((midpoint0, midpoint2, jump_num))
+        jump_num += 1
         edges.append((midpoint2, start, -1))
         edges.append((midpoint2, ss_elements[ii+1][0]-1, -1))
 
         # jump edge
         next_midpoint = (ss_elements[ii+1][0] + ss_elements[ii+1][1]) // 2
-        edges.append((midpoint0, next_midpoint, 1))
+        edges.append((midpoint0, next_midpoint, jump_num))
+        jump_num += 1
         start = ss_elements[ii+1][0]
         
 
@@ -94,7 +96,7 @@ def fold_tree_from_ss(mypose):
     mydsspmv.apply(mypose)
     ss_string = mypose.secstruct()
 
-    print(ss_string)
+    return fold_tree_from_dssp_string(ss_string)
 
 
 def fold_tree_from_dssp_string(ss_string):
@@ -128,7 +130,9 @@ def main():
     mypose = pose_from_pdb(args.structure)
     print(f"Loaded pose with {mypose.total_residue()} residues from: {args.structure}")
     
-    fold_tree_from_ss(mypose)
+    myft = fold_tree_from_ss(mypose)
+    print(myft)
+    
     exit()
 
     # 4. Score the Pose
