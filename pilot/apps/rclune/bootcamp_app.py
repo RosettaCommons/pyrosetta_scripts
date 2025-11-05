@@ -131,12 +131,16 @@ def main():
     print(f"Loaded pose with {mypose.total_residue()} residues from: {args.structure}")
     
     myft = fold_tree_from_ss(mypose)
-    print(myft)
-    
-    exit()
 
     # 4. Score the Pose
     sfxn = rosetta.core.scoring.get_score_function()
+
+    # lab 4 enabling a new score term linear_chainbreak
+    sfxn.set_weight(rosetta.core.scoring.ScoreType.linear_chainbreak, 1)
+    
+    # add the cutpoint variants
+    rosetta.core.pose.correctly_add_cutpoint_variants(mypose)
+
     myscore = sfxn(mypose)
     print(f"Original score: {myscore}")
     
