@@ -28,10 +28,9 @@ def identify_secondary_structure_spans(ss):
             print("Empty string given.")
             return elements
         
-        #if len(ss) == 1:
-        #    print("String of length 1 given, no secondary structure.")
-        #    return elements
-        
+        # taken from the string_splitter homeworks
+        # Checks if the character is E or H and then if it's different
+        # from the previous character, if there is one
         current_char = ss[ii-1]
         if current_char in "EH":
             if start is None:
@@ -43,23 +42,38 @@ def identify_secondary_structure_spans(ss):
     return elements
 
 def get_edges(ss_string):
+    """
+    Function to turn a string of H's and E's, like what will be returned
+    from the DSSP function, into edges for a FoldTree. 
+    Edges are the form (start, end, n), the last value should be -1 if
+    it is a peptide edge and an integer from 1 to the number of jumps
+    if it is a jump point. 
+    :param ss: the secondary structure string output by DSSP
+    :return: a list of tuples storing three values each
+    """
 
     ss_elements = identify_secondary_structure_spans(ss_string)
 
     edges = []
     start = 1
 
+    # this is the midpoint that all the jump points will be starting
+    # from
     midpoint0 = (ss_elements[0][0] + ss_elements[0][1])//2
     midpoint1 = None
     midpoint2 = None
-    jump_num = 1
-    
-    #all_vals = []
-    #for element in ss_elements: 
-    #    all_vals.append(element[0])
-    #    all_vals.append(element[1])
+    jump_num = 1 # used to index the jump points
+
 
     for ii in range(len(ss_elements)-1): 
+        # I treat the last secondary structure element separately 
+        # because it has a different end than the rest and no jump
+        # points based on how I set everything up
+
+        # the start/end for each edge is the midpoint of the element
+        # or the midpoint of the region between the elements, unless
+        # its a starting edge, in which start = 1, or the last 
+
         midpoint1 = (ss_elements[ii][0] + ss_elements[ii][1]) // 2
         edges.append((midpoint1, start, -1))
         edges.append((midpoint1, ss_elements[ii][1], -1)) 
