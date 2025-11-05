@@ -1,46 +1,13 @@
 import pytest
+from pyrosetta import *
 
-def identify_secondary_structure_spans(ss):
-    """
-    Takes a string of H's E's and spaces and returns a list describing
-    how many secondary structure elements were found and the first and 
-    last residues that define each element. 
+from bootcamp_app import identify_secondary_structure_spans, get_edges
 
-    :param ss: A string of H's, E's and spaces defining the secondary
-    structure of your pose
-    :returns: Returns a list where the length of the list is the same
-    as the number of secondary structure elements in the function. 
-    The list will contain tuples where the first residue in the tuple 
-    is the first residue of the SS element, and the second is the
-    last residue in the SS element. 
-    """
-
-    elements = []
-    start = None
-    print(len(ss))
-
-    # Rosetta starts counting at 1, sigh
-    for ii in range(1, len(ss)+1):
-        if len(ss) == 0:
-            print("Empty string given.")
-            return elements
-        
-        #if len(ss) == 1:
-        #    print("String of length 1 given, no secondary structure.")
-        #    return elements
-        
-        current_char = ss[ii-1]
-        if current_char in "EH":
-            if start is None:
-                start = ii
-            if ii == len(ss) or ss[ii] != current_char:
-                elements.append((start, ii))
-                start = None
-
-    return elements
+init(extra_options="-ignore_unrecognized_res")
 
 ss1 = "   EEEEE   HHHHHHHH  EEEEE   IGNOR EEEEEE   HHHHHHHHHHH  EEEEE  HHHH   "
 expected1 = [(4, 8), (12, 19), (22, 26), (36, 41), (45, 55), (58, 62), (65, 68)]
+
 
 ss2 = "HHHHHHH   HHHHHHHHHHHH      HHHHHHHHHHHHEEEEEEEEEEHHHHHHH EEEEHHH "
 expected2 = [(1, 7), (11, 22), (29, 40), (41, 50), (51, 57), (59, 62), (63, 65)]
@@ -57,6 +24,9 @@ expected5 = [(1,1)]
 ss6 = "EH"
 expected6 = [(1,1),(2,2)]
 
+ss7 = "EEEEEESSSDFSDHH    HHHEEEEISUDHHHHHHEE"
+expected7 = [(1,6),(14,15),(20,22),(23,26),(31,36),(37,38)]
+
 @pytest.mark.parametrize("value,expected", 
                           [
                               (ss1, expected1),
@@ -69,4 +39,9 @@ expected6 = [(1,1),(2,2)]
 def test_identify_secondary_structure_spans(value, expected):
     assert identify_secondary_structure_spans(value) == expected
     
+ss = "   EEEEEEE    EEEEEEE         EEEEEEEEE    EEEEEEEEEE   HHHHHH         EEEEEEEEE         EEEEE     "
+expected_edges = [(7, 1, -1), (7, 10, -1), (7, 12, 1), (12, 11, -1), (12, 14, -1), (7, 18, 1), (18, 15, -1), (18, 21, -1), (7, 26, 1), (26, 22, -1), (26, 30, -1), (7, 35, 1), (35, 31, -1), (35, 39, -1), (7, 41, 1), (41, 40, -1), (41, 43, -1), (7, 48, 1), (48, 44, -1), (48, 53, -1), (7, 55, 1), (55, 54, -1), (55, 56, -1), (7, 59, 1), (59, 57, -1), (59, 62, -1), (7, 67, 1), (67, 63, -1), (67, 71, -1), (7, 76, 1), (76, 72, -1), (76, 80, -1), (7, 85, 1), (85, 81, -1), (85, 89, -1), (7, 92, 1), (92, 90, -1), (92, 99, -1)]
+
+def test_get_edges():
+    assert get_edges(ss) == expected_edges
 
