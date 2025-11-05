@@ -72,28 +72,42 @@ def get_edges(ss_string):
 
         # the start/end for each edge is the midpoint of the element
         # or the midpoint of the region between the elements, unless
-        # its a starting edge, in which start = 1, or the last 
+        # its a starting edge, so start needs to be 1, or the last 
+        # edge, in which case end needs to be the same as the number
+        # of residues, or the length of the string from DSSP
 
+        # peptide edge pointing towards the N terminus (<-)
+        # midpoint is in 
         midpoint1 = (ss_elements[ii][0] + ss_elements[ii][1]) // 2
         edges.append((midpoint1, start, -1))
+        # peptide_edge pointing towards the C terminus (->)
         edges.append((midpoint1, ss_elements[ii][1], -1)) 
         
-        start = ss_elements[ii][1] + 1
+
+        start = ss_elements[ii][1] + 1 # update the start 
         midpoint2 = (ss_elements[ii][1] + ss_elements[ii+1][0])//2
+
         # jump_edge
         edges.append((midpoint0, midpoint2, jump_num))
-        jump_num += 1
+        jump_num += 1 # update jump numbering
+
+        # peptide_edge pointing towards the C terminus (->)
         edges.append((midpoint2, start, -1))
         edges.append((midpoint2, ss_elements[ii+1][0]-1, -1))
 
-        # jump edge
+        # jump edge (had to do this here instead of waiting for the next
+        # loop because it otherwise would have added a jump edge as the
+        # first edge, which I don't want. There is probably a cleaner 
+        # way to write this algorithm. Will feed into an LLM if I have
+        # time/motivation later.)
         next_midpoint = (ss_elements[ii+1][0] + ss_elements[ii+1][1]) // 2
         edges.append((midpoint0, next_midpoint, jump_num))
         jump_num += 1
         start = ss_elements[ii+1][0]
         
 
-    # the last element: 
+    # the last element: (treated differently because the end needs to be
+    # the length of the ss string)
     midpoint = (ss_elements[-1][0] + ss_elements[-1][1])//2
     edges.append((midpoint, start, -1))
     edges.append((midpoint, len(ss_string), -1))
@@ -102,9 +116,10 @@ def get_edges(ss_string):
 
 def fold_tree_from_ss(mypose):
     """
-
-    :param mypose: 
-    :returns: A FoldTree
+    Takes a pose and returns a fold tree. 
+    :param mypose: A rosetta.core.pose.Pose (https://graylab.jhu.edu/PyRosetta.documentation/pyrosetta.rosetta.core.pose.html#pyrosetta.rosetta.core.pose.Pose)
+    object
+    :returns: A FoldTree (https://graylab.jhu.edu/PyRosetta.documentation/pyrosetta.rosetta.core.kinematics.html#pyrosetta.rosetta.core.kinematics.FoldTree)
     """
     mydsspmv = rosetta.protocols.moves.DsspMover()
     mydsspmv.apply(mypose)
@@ -112,14 +127,13 @@ def fold_tree_from_ss(mypose):
 
     return fold_tree_from_dssp_string(ss_string)
 
-
 def fold_tree_from_dssp_string(ss_string):
     """
     Takes the string returned by DSSP and creates a FoldTree
     :param ss_string: This string comes from Rosetta/PyRosetta's DSSP
     code. It is a string of H's and E's (and maybe some other letters)
     that defines the secondary structure elements of a given pose.
-    :returns: A FoldTree
+    :returns: A FoldTree object (https://graylab.jhu.edu/PyRosetta.documentation/pyrosetta.rosetta.core.kinematics.html#pyrosetta.rosetta.core.kinematics.FoldTree)
     """
     myft = rosetta.core.kinematics.FoldTree()
 
@@ -130,41 +144,43 @@ def fold_tree_from_dssp_string(ss_string):
     
     return myft
 
-
-
 def main():
+
+    # initialize PyRosetta, I'm actually not sure what this does
+    # or why we need it
     init(extra_options="-ignore_unrecognized_res")
 
+    # This allows us to give information from the command line
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--structure", required=True, help="PDB file to load")
     args = parser.parse_args()
 
-    # 3. Load the Pose from File
+    # Lab 2, 3. Load the Pose from File
     print(f'Input file: {args.structure}')
     mypose = pose_from_pdb(args.structure)
     print(f"Loaded pose with {mypose.total_residue()} residues from: {args.structure}")
     
     myft = fold_tree_from_ss(mypose)
 
-    # 4. Score the Pose
+    # Lab 2, 4. Score the Pose
     sfxn = rosetta.core.scoring.get_score_function()
 
     # lab 4 enabling a new score term linear_chainbreak
     sfxn.set_weight(rosetta.core.scoring.ScoreType.linear_chainbreak, 1)
     
-    # add the cutpoint variants
+    # Lab 4, add the cutpoint variants
     rosetta.core.pose.correctly_add_cutpoint_variants(mypose)
 
     myscore = sfxn(mypose)
     print(f"Original score: {myscore}")
     
-    # 5. Create Monte Carlo Protocol to Optimize Pose
+    # Lab 2, 5. Create Monte Carlo Protocol to Optimize Pose
     
-    # C. Initialize a MonteCarloObject and loop over residues
+    # Lab 2, 5C. Initialize a MonteCarloObject and loop over residues
     temperature = 1.0
     mymc = rosetta.protocols.moves.MonteCarlo(mypose, sfxn, temperature)
     
-    # 7. MoveMap stuff 
+    # Lab 2, 7. MoveMap stuff 
     mm = rosetta.core.kinematics.MoveMap()
     mm.set_chi(True)
     mm.set_bb(True)
@@ -172,7 +188,7 @@ def main():
     min_opts = rosetta.core.optimization.MinimizerOptions("lbfgs_armijo_atol", 0.01, True)
     minimizer = rosetta.core.optimization.AtomTreeMinimizer()
     
-    # 7 Packing and Minimizing
+    # Lab2, 7 Packing and Minimizing
     # Packing
     tf = rosetta.core.pack.task.TaskFactory()
     task = tf.create_task_and_apply_taskoperations(mypose)
@@ -181,23 +197,25 @@ def main():
     
     minimizer.run(mypose, mm, sfxn, min_opts)
     
-    # 6 PyMOL
+    # Lab 2, 6 PyMOL
     the_observer = rosetta.protocols.moves.PyMOLObserver()
     the_observer.pymol().apply(mypose)
     
     acceptance_rate = 0
     cumulative_acceptance_rate = 0
+
+    # how often to print information about the MC acceptance rates
     print_rate = 100
     
     for ii in range(1000):
         print(f"Step {ii}: ")
     
-        # A. get your random residue and random perturbations
+        # Lab2, 5A. get your random residue and random perturbations
         myres = np.random.randint(1, mypose.total_residue()+1)
         my_phi = np.random.normal()
         my_psi = np.random.normal()
     
-        # B. perturb the pose, paying attention to if the residue is not an amino acid
+        # Lab 2, 5B. perturb the pose, paying attention to if the residue is not an amino acid
         try:
             orig_phi = mypose.phi(myres)
             orig_psi = mypose.psi(myres)
@@ -208,25 +226,31 @@ def main():
             print(f"Residue {myres} is not an amino acid")
             pass
         
+        # pack and minimize the rotamers after the MC step
+        # Probably only need to do this if the MC step was accepted?
         rosetta.core.pack.pack_rotamers(mypose, sfxn, task)
         minimizer.run(mypose, mm, sfxn, min_opts)
     
+        # Run the metropolis algorithm for acceptance
         is_accepted = mymc.boltzmann(mypose)
-        print(is_accepted)
+        #print(is_accepted)
+
+        # collect information on acceptance rates
         if is_accepted:
             acceptance_rate += 1
             cumulative_acceptance_rate += 1
         
+        # Update the pymol observer
+        # probably also something that only needs to be done if the step is accepted
         the_observer.pymol().apply(mypose)
     
+        # print the acceptance criteria
         if ii % print_rate == 0 and ii != 0:
             print(f"Acceptance rate: {acceptance_rate/print_rate}")
             acceptance_rate = 0 # reset acceptance rate to 0
             print(f"Cumulative acceptance rate: {cumulative_acceptance_rate/ii}")
             print(mymc.show_counters())
             print(f"Average score: {mypose.energies().total_energy()}")
-    
-    
     
     print(mymc.last_accept())
     final_pose = mymc.lowest_score_pose()

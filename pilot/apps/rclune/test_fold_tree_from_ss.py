@@ -1,7 +1,7 @@
 import pytest
 from pyrosetta import *
 
-from bootcamp_app import identify_secondary_structure_spans, get_edges, fold_tree_from_dssp_string
+from bootcamp_app import identify_secondary_structure_spans, get_edges, fold_tree_from_dssp_string, fold_tree_from_ss
 
 init(extra_options="-ignore_unrecognized_res")
 
@@ -57,3 +57,7 @@ def test_fold_tree_from_dssp_string_edges():
     myft = fold_tree_from_dssp_string(ss)
     assert myft.to_string() == expected_ft_string
 
+def test_fold_tree_from_ss_valid():
+    mypose = pose_from_pdb("test_in.pdb")
+    myft = fold_tree_from_ss(mypose)
+    assert myft.check_fold_tree() == True
