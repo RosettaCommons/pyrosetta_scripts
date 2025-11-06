@@ -7,25 +7,18 @@ Creating a Mover based off of the code in Lab 4 (FoldTree + MonteCarlo)
 (c) The Rosetta software is developed by the contributing members of the Rosetta Commons. 
 (c) For more information, see http://www.rosettacommons.org. Questions about this can be 
 (c) addressed to University of Washington CoMotion, email: license@uw.edu.
-Brief:   This PyRosetta script does blah.
 
-Params:  ./blah.py .pdb 
-
-Example: ./blah.py foo.pdb 1000
-
-Remarks: Blah blah blah, blah, blah.
-
-Author:  Jason W. Labonte
+Author:  Rachel Clune
 """
 
-import sys
-import argparse
 from pyrosetta import *
 import numpy as np
 
 class BootCampMover(rosetta.protocols.moves.Mover):
-    def __init__(self):
+    def __init__(self, sfxn=rosetta.core.scoring.get_score_function(), num_iterations=1000):
         super().__init__(self) 
+        self._sfxn = sfxn
+        self._num_iterations = num_iterations
 
     def apply(self, mypose):
         def identify_secondary_structure_spans(ss):
@@ -190,7 +183,7 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         myft = fold_tree_from_ss(mypose)
         
         # Lab 2, 4. Score the Pose
-        sfxn = rosetta.core.scoring.get_score_function()
+        sfxn = self.get_sfxn()
         
         # lab 4 enabling a new score term linear_chainbreak
         sfxn.set_weight(rosetta.core.scoring.ScoreType.linear_chainbreak, 1)
@@ -230,7 +223,7 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         # how often to print information about the MC acceptance rates
         print_rate = 100
         
-        for ii in range(1000):
+        for ii in range(self.get_num_iterations()):
             print(f"Step {ii}: ")
         
             # Lab2, 5A. get your random residue and random perturbations
@@ -280,4 +273,34 @@ class BootCampMover(rosetta.protocols.moves.Mover):
 
     def get_name():
         return self.__class__.__name__
+    
+    @staticmethod
+    def mover_name(self):
+        return self.__class__.__name__
+    
+    def provide_xml_schema(self, xsd):
+        pass
+    
+    def set_sfxn(self, new_sfxn):
+        self._sfxn = new_sfxn
+    
+    def get_sfxn(self):
+        return self._sfxn
+    
+    def set_num_iterations(self, new_num_iterations):
+        self._num_iterations = new_num_iterations
+    
+    def get_num_iterations(self):
+        return self._num_iterations
+    
+    def parse_my_tag(self, tag, datamap):
+        if tag.hasOption("num_iterations"):
+            iters = tag.get_option_int("num_iterations", 1)
+            self.set_num_iterations(iters)
+
+        if tag.hasOption("sfxn"):
+            sfxn_choice = tag.get_option_string("sfxn", "commandline")
+            mysfxn = rosetta.core.scoring.parse_score_function(tag, sfxn_choice, datamap)
+            self.set_sfxn(mysfxn)
+
     
