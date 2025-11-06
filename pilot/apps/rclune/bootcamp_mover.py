@@ -12,13 +12,26 @@ Author:  Rachel Clune
 """
 
 from pyrosetta import *
+
+from pyrosetta.rosetta.utility.tag import xsct_positive_integer
+
 import numpy as np
 
 class BootCampMover(rosetta.protocols.moves.Mover):
-    def __init__(self, sfxn=rosetta.core.scoring.get_score_function(), num_iterations=1000):
-        super().__init__(self) 
-        self._sfxn = sfxn
+
+    _clones = list()
+
+    def __init__(self, sfxn=None, num_iterations=1000):
+        print("start_init")
+        super().__init__()
+        print("here_after_super")
+        if sfxn == None:
+            self._sfxn = rosetta.core.scoring.get_score_function()
+        else:
+            self._sfxn = sfxn
+
         self._num_iterations = num_iterations
+        print("end_init")
 
     def apply(self, mypose):
         def identify_secondary_structure_spans(ss):
@@ -268,27 +281,29 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         final_pose = mymc.lowest_score_pose()
         final_score = mymc.lowest_score()
         print(f"Final Score: {final_score}")
-        final_pose.dump_pdb(f"optimized_{args.structure}")
+        final_pose.dump_pdb(f"optimized_pose.pdb")
         print(f"Temperature = {temperature}")
 
-    def get_name():
+    def get_name(self):
         return self.__class__.__name__
     
     @staticmethod
-    def mover_name(self):
-        return self.__class__.__name__
+    def mover_name():
+        return "BootCampMover"
     
     @staticmethod
-    def provide_xml_schema(self, xsd):
+    def provide_xml_schema(xsd):
         attrs = rosetta.std.list_utility_tag_XMLSchemaAttribute_t()
         num_iter_attr = rosetta.utility.tag.XMLSchemaAttribute.attribute_w_default(
-            "num_iterations", rosetta.utility.tag.XMLSchemaType(rosetta.utility.tag.XMLSchemaCommonType.xsct_positive_integer),
-            "The number of iterations in the MonteCarlo procedures."
+            "num_iterations", rosetta.utility.tag.XMLSchemaType(xsct_positive_integer),
+            "The number of iterations in the MonteCarlo procedures.",
+            "1000"
             )
+            #rosetta.utility.tag.XMLSchemaType() 
             # rosetta.utility.tag.XMLSchemaCommonType
         attrs.append(num_iter_attr)
 
-        rosetta.core.scoring.attritbutes_for_parse_score_function_w_description(
+        rosetta.core.scoring.attributes_for_parse_score_function_w_description(
             attrs, 
             "ScoreFunction to use for sampling."
         )
@@ -314,13 +329,24 @@ class BootCampMover(rosetta.protocols.moves.Mover):
 
     
     def parse_my_tag(self, tag, datamap):
+        print("start")
         if tag.hasOption("num_iterations"):
             iters = tag.get_option_int("num_iterations", 1)
             self.set_num_iterations(iters)
 
-        if tag.hasOption("sfxn"):
-            sfxn_choice = tag.get_option_string("sfxn", "commandline")
+        if tag.hasOption("scorefxn"):
+            sfxn_choice = tag.get_option_string("scorefxn", "commandline")
             mysfxn = rosetta.core.scoring.parse_score_function(tag, sfxn_choice, datamap)
             self.set_sfxn(mysfxn)
+
+        print("end")
+
+    def clone(self):
+        copy = BootCampMover(self._sfxn, self._num_iterations)
+        BootCampMover._clones.append(copy)
+        return copy
+
+    def fresh_instance(self):
+        return BootCampMover()
 
     

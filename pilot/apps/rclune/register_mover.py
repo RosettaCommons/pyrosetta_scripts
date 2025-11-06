@@ -26,7 +26,7 @@ class BootCampMoverCreator(rosetta.protocols.moves.MoverCreator):
 _py_mover_creators_ = []
 
 def register():
-    factory = protocols.moves.MoverFactory.get_instance()
+    factory = rosetta.protocols.moves.MoverFactory.get_instance()
     creator = BootCampMoverCreator()
     factory.factory_register(creator)
 
