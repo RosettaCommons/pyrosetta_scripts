@@ -13,7 +13,7 @@ Author:  Rachel Clune
 
 from pyrosetta import *
 
-from pyrosetta.rosetta.utility.tag import xsct_positive_integer
+#from pyrosetta.rosetta.utility.tag import xsct_positive_integer
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class BootCampMover(rosetta.protocols.moves.Mover):
 
     _clones = list()
 
-    def __init__(self, sfxn=None, num_iterations=1000):
+    def __init__(self, sfxn: rosetta.core.scoring.ScoreFunction | None = None, num_iterations: int = 1000):
         print("start_init")
         super().__init__()
         print("here_after_super")
@@ -295,12 +295,10 @@ class BootCampMover(rosetta.protocols.moves.Mover):
     def provide_xml_schema(xsd):
         attrs = rosetta.std.list_utility_tag_XMLSchemaAttribute_t()
         num_iter_attr = rosetta.utility.tag.XMLSchemaAttribute.attribute_w_default(
-            "num_iterations", rosetta.utility.tag.XMLSchemaType(xsct_positive_integer),
+            "num_iterations", rosetta.utility.tag.XMLSchemaType(rosetta.utility.tag.xsct_positive_integer),
             "The number of iterations in the MonteCarlo procedures.",
             "1000"
             )
-            #rosetta.utility.tag.XMLSchemaType() 
-            # rosetta.utility.tag.XMLSchemaCommonType
         attrs.append(num_iter_attr)
 
         rosetta.core.scoring.attributes_for_parse_score_function_w_description(
@@ -329,7 +327,6 @@ class BootCampMover(rosetta.protocols.moves.Mover):
 
     
     def parse_my_tag(self, tag, datamap):
-        print("start")
         if tag.hasOption("num_iterations"):
             iters = tag.get_option_int("num_iterations", 1)
             self.set_num_iterations(iters)
