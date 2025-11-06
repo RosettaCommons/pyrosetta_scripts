@@ -296,12 +296,9 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         rosetta.protocols.moves.xsd_type_definition_w_attributes(
             xsd, 
             "BootCampMover",
-            "This mover creates a FoldTree for the input structure that assumes only aHelixes or b-sheets. Then a Monte Carlo procedure is run with packing and minimization performed at each step."
+            "This mover creates a FoldTree for the input structure that assumes only aHelixes or b-sheets. Then a Monte Carlo procedure is run with packing and minimization performed at each step.",
             attrs
         )
-
-
-
     
     def set_sfxn(self, new_sfxn):
         self._sfxn = new_sfxn
@@ -314,6 +311,7 @@ class BootCampMover(rosetta.protocols.moves.Mover):
     
     def get_num_iterations(self):
         return self._num_iterations
+
     
     def parse_my_tag(self, tag, datamap):
         if tag.hasOption("num_iterations"):
