@@ -278,8 +278,30 @@ class BootCampMover(rosetta.protocols.moves.Mover):
     def mover_name(self):
         return self.__class__.__name__
     
+    @staticmethod
     def provide_xml_schema(self, xsd):
-        pass
+        attrs = rosetta.std.list_utility_tag_XMLSchemaAttribute_t()
+        num_iter_attr = rosetta.utility.tag.XMLSchemaAttribute.attribute_w_default(
+            "num_iterations", rosetta.utility.tag.XMLSchemaType(rosetta.utility.tag.XMLSchemaCommonType.xsct_positive_integer),
+            "The number of iterations in the MonteCarlo procedures."
+            )
+            # rosetta.utility.tag.XMLSchemaCommonType
+        attrs.append(num_iter_attr)
+
+        rosetta.core.scoring.attritbutes_for_parse_score_function_w_description(
+            attrs, 
+            "ScoreFunction to use for sampling."
+        )
+
+        rosetta.protocols.moves.xsd_type_definition_w_attributes(
+            xsd, 
+            "BootCampMover",
+            "This mover creates a FoldTree for the input structure that assumes only aHelixes or b-sheets. Then a Monte Carlo procedure is run with packing and minimization performed at each step."
+            attrs
+        )
+
+
+
     
     def set_sfxn(self, new_sfxn):
         self._sfxn = new_sfxn

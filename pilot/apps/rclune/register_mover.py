@@ -21,6 +21,7 @@ class BootCampMoverCreator(rosetta.protocols.moves.MoverCreator):
         print("Creator provide_xml_schema is called. ")
         BootCampMover.provide_xml_schema(xsd)
 
+
 #global variable
 _py_mover_creators_ = []
 
