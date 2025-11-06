@@ -3,6 +3,11 @@ import numpy as np
 from bootcamp_mover import BootCampMover
 
 class BootCampMoverCreator(rosetta.protocols.moves.MoverCreator):
+    """
+    This class registers the BootCampMover we made so that it can be called
+    from an XML script with RosettaScripts. See the 6th lab lecture for more 
+    information.
+    """
 
     _instances = list()
 

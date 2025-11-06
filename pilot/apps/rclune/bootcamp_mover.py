@@ -18,20 +18,25 @@ from pyrosetta import *
 import numpy as np
 
 class BootCampMover(rosetta.protocols.moves.Mover):
+    """
+    Class defining our BootCampMover to use with RosettaScripts. 
+    """
 
     _clones = list()
 
     def __init__(self, sfxn: rosetta.core.scoring.ScoreFunction | None = None, num_iterations: int = 1000):
-        print("start_init")
+        # I tried having the default be a string and then building the score function
+        # here and that resulted in errors. 
+        # I also tried to have the default just be rosetta.core.scoring.get_score_function()
+        # but that also created errors. This is the recommended way to do it by Hope
+        # and Rocco. 
         super().__init__()
-        print("here_after_super")
         if sfxn == None:
             self._sfxn = rosetta.core.scoring.get_score_function()
         else:
             self._sfxn = sfxn
 
         self._num_iterations = num_iterations
-        print("end_init")
 
     def apply(self, mypose):
         def identify_secondary_structure_spans(ss):
@@ -259,6 +264,9 @@ class BootCampMover(rosetta.protocols.moves.Mover):
             # Probably only need to do this if the MC step was accepted?
             rosetta.core.pack.pack_rotamers(mypose, sfxn, task)
             minimizer.run(mypose, mm, sfxn, min_opts)
+
+            the_observer = rosetta.protocols.moves.PyMOLObserver()
+            the_observer.pymol().apply(mypose)
         
             # Run the metropolis algorithm for acceptance
             is_accepted = mymc.boltzmann(mypose)
@@ -268,6 +276,10 @@ class BootCampMover(rosetta.protocols.moves.Mover):
             if is_accepted:
                 acceptance_rate += 1
                 cumulative_acceptance_rate += 1
+
+            # Update the pymol observer
+            # probably also something that only needs to be done if the step is accepted
+            the_observer.pymol().apply(mypose)
         
             # print the acceptance criteria
             if ii % print_rate == 0 and ii != 0:
@@ -285,14 +297,21 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         print(f"Temperature = {temperature}")
 
     def get_name(self):
+        # no idea why but it's supposed to always be this
         return self.__class__.__name__
     
     @staticmethod
     def mover_name():
+        # Since this is a static method it doesn't have a 'self' and I'm 
+        # pretty sure you could use any string here. I'm not really sure what 
+        # it's used for and I don't want to dig through the Rosetta code base
+        # to figure it out. 
         return "BootCampMover"
     
     @staticmethod
     def provide_xml_schema(xsd):
+        # This is what tells RosettaScripts what options there are for this Mover
+        # and generates the documentation around it. 
         attrs = rosetta.std.list_utility_tag_XMLSchemaAttribute_t()
         num_iter_attr = rosetta.utility.tag.XMLSchemaAttribute.attribute_w_default(
             "num_iterations", rosetta.utility.tag.XMLSchemaType(rosetta.utility.tag.xsct_positive_integer),
@@ -301,6 +320,7 @@ class BootCampMover(rosetta.protocols.moves.Mover):
             )
         attrs.append(num_iter_attr)
 
+        # this will internally update the attrs list
         rosetta.core.scoring.attributes_for_parse_score_function_w_description(
             attrs, 
             "ScoreFunction to use for sampling."
@@ -327,23 +347,29 @@ class BootCampMover(rosetta.protocols.moves.Mover):
 
     
     def parse_my_tag(self, tag, datamap):
+        # this is how RosettaScripts parses the options given to it and checks
+        # for type errors.
         if tag.hasOption("num_iterations"):
             iters = tag.get_option_int("num_iterations", 1)
             self.set_num_iterations(iters)
 
         if tag.hasOption("scorefxn"):
+            # Note that the score function attribute name has to be 'scorefxn'
+            # the attribute is not explicitly named in the provide_xml_schema
+            # function above.
             sfxn_choice = tag.get_option_string("scorefxn", "commandline")
             mysfxn = rosetta.core.scoring.parse_score_function(tag, sfxn_choice, datamap)
             self.set_sfxn(mysfxn)
 
-        print("end")
-
     def clone(self):
+        # I think this was discussed in the lab lecture, but I honestly don't know
+        # why we need to do this. 
         copy = BootCampMover(self._sfxn, self._num_iterations)
         BootCampMover._clones.append(copy)
         return copy
 
     def fresh_instance(self):
+        # Same as previous function, no idea why we need this. 
         return BootCampMover()
 
     
