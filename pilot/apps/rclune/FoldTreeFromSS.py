@@ -62,32 +62,35 @@ class FoldTreeFromSS:
 
         start = 0
         for i, end in enumerate(midpoints):
-            self._loop_for_residues.extend([i] * (end - start-1))
+            self._loop_for_residue.extend([i] * (end - start-1))
             start = end-1 
 
         # add zeros to the remaining portion of the list: 
-        self._loop_for_residues.extend([0] * (self._pose.total_residue()-start))
+        self._loop_for_residue.extend([0] * (self._pose.total_residue()-start))
 
 
     
-    def fold_tree(self) -> rosetta.core.kinematics.FoldTree:
+    def get_fold_tree(self) -> rosetta.core.kinematics.FoldTree:
         """
-        Returns the final fold tree, I guess? But why? 
+        Getter for the FoldTree
         """
-        pass
+        self.fold_tree_from_ss(self)
+        return self._ft
     
-    def loop(self, index: int) -> rosetta.protocols.loops.Loop:
-        """
-        This function takes the loop index and returns the actual loops
-        """
-        return _Built.loops[index]
+    def get_loop(self, index):
+        self.create_loop_list()
+        return self._loops, index
     
-    def loop_for_residue(self, seqpos: int) -> int: 
-        """
-        This function takes a residue index and tells you which loop 
-        it belongs to. 
-        """
-        pass
+    def get_index_from_loop_for_residue(self, index):
+        self.create_loop_for_residue(self)
+        return self._loop_for_residue[index]
+    
+    #def loop(self, index: int) -> rosetta.protocols.loops.Loop:
+    #    """
+    #    This function takes the loop index and returns the actual loops
+    #    """
+    #
+    #    return self._residues_for_loop[index]
     
     def get_cutpoints(self):
         """
@@ -123,30 +126,26 @@ class FoldTreeFromSS:
         is the first residue of the SS element, and the second is the
         last residue in the SS element. 
         """
-
-        ss = self.ss_string
     
-        elements = []
         start = None
     
         # Rosetta starts counting at 1, sigh
-        for ii in range(1, len(ss)+1):
-            if len(ss) == 0:
+        for ii in range(1, len(self._ss_string)+1):
+            if len(self._ss_string) == 0:
                 print("Empty string given.")
-                return elements
+                self._ss_elements = []
+                break
             
             # taken from the string_splitter homeworks
             # Checks if the character is E or H and then if it's different
             # from the previous character, if there is one
-            current_char = ss[ii-1]
+            current_char = self._ss_string[ii-1]
             if current_char in "EH":
                 if start is None:
                     start = ii
-                if ii == len(ss) or ss[ii] != current_char:
-                    elements.append((start, ii))
+                if ii == len(self._ss_string) or self._ss_string[ii] != current_char:
+                    self._ss_elements.append((start, ii))
                     start = None
-    
-        return elements
     
     def get_edges(self):
         """
@@ -252,7 +251,7 @@ class FoldTreeFromSS:
         mydsspmv.apply(self._pose)
         self._ss_string = self._pose.secstruct()
     
-        return fold_tree_from_dssp_string(ss_string)
+        return self.fold_tree_from_dssp_string(self)
     
     def fold_tree_from_dssp_string(self):
         """
@@ -262,11 +261,10 @@ class FoldTreeFromSS:
         that defines the secondary structure elements of a given pose.
         :returns: A FoldTree object (https://graylab.jhu.edu/PyRosetta.documentation/pyrosetta.rosetta.core.kinematics.html#pyrosetta.rosetta.core.kinematics.FoldTree)
         """
-        myft = rosetta.core.kinematics.FoldTree()
     
         edges = self.get_edges()
     
         for edge in edges:
-            myft.add_edge(edge[0], edge[1], edge[2])
+            self._ft.add_edge(edge[0], edge[1], edge[2])
         
-        return myft
+        
