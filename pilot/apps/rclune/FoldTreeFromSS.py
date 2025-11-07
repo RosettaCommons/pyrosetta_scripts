@@ -1,6 +1,8 @@
 from pyrosetta import *
 import numpy as np
 
+from dataclasses import dataclass
+
 @dataclass
 class _Built:
     ft: rosetta.core.kinematics.FoldTree
@@ -22,20 +24,27 @@ class FoldTreeFromSS:
         self._pose = pose
         self._loop_left = loop_left
         self._loop_right = loop_right
-        self._ss_elements = None
-        self._ss_string = None
-        self._cutpoints = None
-        self._loops = [0] * self._pose.total_residue()
+        
+        mydsspmv = rosetta.protocols.moves.DsspMover()
+        mydsspmv.apply(self._pose)
+        self._ss_string = self._pose.secstruct()
+
+        self._ss_elements = self.identify_secondary_structure_spans()
+        self._cutpoints = self.calculate_cutpoints()
+        self._loops = []
         self._loop_for_residue=[]
-        self._ft = None
+        self._ft = rosetta.core.kinematics.FoldTree()
         #self._loop_data = _Built(ft=None, loops=[], loop_for_residue=[])
 
+        self.create_loop_list()
+        self.create_loop_for_residue_list()
+        self.fold_tree_from_ss()
         
     def create_loop_list(self):
         # Just need to count the number of loops
         # I am assuming there is a loop between each ss element
         
-        cutpoints = self.get_cutpoints()
+        cutpoints = self.calculate_cutpoints()
 
         # index of 0 means that no loop closure is needed
         # so I'm having the 0th element not be a loop!
@@ -52,6 +61,7 @@ class FoldTreeFromSS:
         """
 
         midpoints = []
+
         for ii in range(len(self._ss_elements)-1):
             midpoints.append((self._ss_elements[ii][0] + self._ss_elements[ii][1])//2)
             midpoints.append((self._ss_elements[ii][1] + self._ss_elements[ii+1][0])//2)
@@ -74,15 +84,15 @@ class FoldTreeFromSS:
         """
         Getter for the FoldTree
         """
-        self.fold_tree_from_ss(self)
+        #self.fold_tree_from_ss()
         return self._ft
     
     def get_loop(self, index):
-        self.create_loop_list()
-        return self._loops, index
+        #self.create_loop_list()
+        return self._loops[index]
     
     def get_index_from_loop_for_residue(self, index):
-        self.create_loop_for_residue(self)
+        #self.create_loop_for_residue_list()
         return self._loop_for_residue[index]
     
     #def loop(self, index: int) -> rosetta.protocols.loops.Loop:
@@ -92,23 +102,28 @@ class FoldTreeFromSS:
     #
     #    return self._residues_for_loop[index]
     
-    def get_cutpoints(self):
+    def calculate_cutpoints(self):
         """
         Don't know if I'll need this but I feel like it'll be useful.
         Create a function that just creates a list of the indices of
         the residues that are to the left of the cutpoint.
         """
-        self._cutpoints = []
+        cutpoints = []
 
         # first cutpoint is the end of the first ss element
-        self._cutpoints.append(self._ss_elements[0][1])
+        cutpoints.append(self._ss_elements[0][1])
 
         for ii in range(1, len(self._ss_elements)-1):
-            self._cutpoints.append(self._ss_elements[ii][0]-1)
-            self._cutpoints.append(self._ss_elements[ii][1])
+            cutpoints.append(self._ss_elements[ii][0]-1)
+            cutpoints.append(self._ss_elements[ii][1])
 
         # last cutpoint is at the beginning of the last element
-        self._cutpoints.append(self._ss_elements[-1][0]-1)
+        cutpoints.append(self._ss_elements[-1][0]-1)
+
+        print("CUTPOINTS")
+        print(cutpoints)
+
+        return cutpoints
 
 
 
@@ -126,15 +141,17 @@ class FoldTreeFromSS:
         is the first residue of the SS element, and the second is the
         last residue in the SS element. 
         """
-    
+
+        elements = []
+        print(self._ss_string)
+
         start = None
     
         # Rosetta starts counting at 1, sigh
         for ii in range(1, len(self._ss_string)+1):
             if len(self._ss_string) == 0:
                 print("Empty string given.")
-                self._ss_elements = []
-                break
+                return elements
             
             # taken from the string_splitter homeworks
             # Checks if the character is E or H and then if it's different
@@ -144,8 +161,9 @@ class FoldTreeFromSS:
                 if start is None:
                     start = ii
                 if ii == len(self._ss_string) or self._ss_string[ii] != current_char:
-                    self._ss_elements.append((start, ii))
+                    elements.append((start, ii))
                     start = None
+        return elements
     
     def get_edges(self):
         """
@@ -158,7 +176,7 @@ class FoldTreeFromSS:
         :return: a list of tuples storing three values each
         """
     
-        self._ss_elements = identify_secondary_structure_spans(self._ss_string)
+        #self._ss_elements = identify_secondary_structure_spans(self._ss_string)
     
         edges = []
         start = 1
@@ -249,9 +267,9 @@ class FoldTreeFromSS:
 
         mydsspmv = rosetta.protocols.moves.DsspMover()
         mydsspmv.apply(self._pose)
-        self._ss_string = self._pose.secstruct()
+        #self._ss_string = self._pose.secstruct()
     
-        return self.fold_tree_from_dssp_string(self)
+        return self.fold_tree_from_dssp_string()
     
     def fold_tree_from_dssp_string(self):
         """

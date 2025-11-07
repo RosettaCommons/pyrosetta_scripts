@@ -200,7 +200,12 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         #     return myft
 
         ftfss = FoldTreeFromSS(mypose)
-        
+
+        myft = ftfss.get_fold_tree()
+
+        print(myft)
+        print(myft.check_fold_tree())
+
         # Lab 2, 4. Score the Pose
         sfxn = self.get_sfxn()
         
@@ -209,6 +214,14 @@ class BootCampMover(rosetta.protocols.moves.Mover):
         
         # Lab 4, add the cutpoint variants
         rosetta.core.pose.correctly_add_cutpoint_variants(mypose)
+
+        #for residue_num in range(1, mypose.total_residue()+1):
+        #    print(f"{residue_num}, {myft.cutpoint_map(residue_num)}")
+        
+        #print()
+        #print(myft.cutpoints())
+
+        #exit()
         
         myscore = sfxn(mypose)
         print(f"Original score: {myscore}")
@@ -270,7 +283,7 @@ class BootCampMover(rosetta.protocols.moves.Mover):
                 print(f"Closing loop: start={myloop.start()} stop={myloop.stop()} cut={myloop.cut()}")
 
                 ccd = rosetta.protocols.loops.loop_closure.ccd.CCDLoopClosureMover(myloop, mm)
-                ccd.apply(self._pose)
+                ccd.apply(mypose)
 
             # pack and minimize the rotamers after the MC step
             # Probably only need to do this if the MC step was accepted?
