@@ -180,6 +180,8 @@ def main():
     print(f"Loaded pose with {mypose.total_residue()} residues from: {args.structure}")
     
     myft = fold_tree_from_ss(mypose)
+    print(myft)
+    print(myft.check_fold_tree())
 
     # Lab 2, 4. Score the Pose
     sfxn = rosetta.core.scoring.get_score_function()
